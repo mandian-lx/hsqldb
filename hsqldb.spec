@@ -28,55 +28,51 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-%define gcj_support     1
+%define _localstatedir %{_var}
 
-%define section         devel
+%define _with_gcj_support 1
+%define gcj_support %{?_with_gcj_support:1}%{!?_with_gcj_support:%{?_without_gcj_support:0}%{!?_without_gcj_support:%{?_gcj_support:%{_gcj_support}}%{!?_gcj_support:0}}}
 
-%define cvs_version     1_8_0_7
+%define section                devel
 
-%define _localstatedir  %{_var}
+%define cvs_version        1_8_0_8
 
-Name:           hsqldb
-Version:        1.8.0.7
-Release:        %mkrel 2.1
-Epoch:          1
+Name:                hsqldb
+Version:        1.8.0.8
+Release:        %mkrel 1.0.1
+Epoch:                1
 Summary:        Hsqldb Database Engine
-License:        BSD Style
-Url:            http://hsqldb.sourceforge.net/
-#http://downloads.sourceforge.net/hsqldb/hsqldb_1_8_0_7.zip
+License:        BSD
+Url:                http://hsqldb.sourceforge.net/
+#http://downloads.sourceforge.net/hsqldb/hsqldb_1_8_0_8.zip
 Source0:        %{name}_%{cvs_version}.zip
-Source1:        %{name}-%{version}-standard.cfg
-Source2:        %{name}-%{version}-standard-server.properties
-Source3:        %{name}-%{version}-standard-webserver.properties
-Source4:        %{name}-%{version}-standard-sqltool.rc
-Patch0:         %{name}-%{version}-scripts.patch
-Patch1:         hsqldb-tmp.patch
-# TODO: stop the verbosity
-Patch2:         hsqldb-1.8.0.7-initscript.patch
-Requires:       servletapi5
-Requires(post): /bin/rm,/bin/ln
-Requires(post): rpm-helper
-Requires(pre): rpm-helper
-Requires(preun): rpm-helper
-Requires(post): servletapi5
-Requires(preun): /bin/rm
-Requires(pre):  shadow-utils
-BuildRequires:  ant
-BuildRequires:  junit
-BuildRequires:  jpackage-utils >= 0:1.5
-BuildRequires:  servletapi5
-Group:          Development/Java
+Source1:        %{name}-1.8.0-standard.cfg
+Source2:        %{name}-1.8.0-standard-server.properties
+Source3:        %{name}-1.8.0-standard-webserver.properties
+Source4:        %{name}-1.8.0-standard-sqltool.rc
+Patch0:                %{name}-1.8.0-scripts.patch
+Patch1:                hsqldb-tmp.patch
+Requires:        servletapi5
+Requires(pre):  rpm-helper
+Requires(post):  rpm-helper
+Requires(preun):  rpm-helper
+Requires(postun):  rpm-helper
+Requires(post):   servletapi5
+Requires(pre):        shadow-utils
+BuildRequires:        ant
+BuildRequires:        junit
+BuildRequires:        jpackage-utils >= 0:1.5
+BuildRequires:        servletapi5
+Group:                Development/Java
 %if ! %{gcj_support}
-Buildarch:      noarch
+Buildarch:        noarch
 %endif
-BuildRoot:      %{_tmppath}/%{name}-%{version}-buildroot
-#Distribution:  JPackage
-#Vendor:        JPackage Project
+Buildroot:        %{_tmppath}/%{name}-%{version}-%{release}-root
 
 %if %{gcj_support}
-BuildRequires:  java-gcj-compat-devel
-Requires(post): java-gcj-compat
-Requires(postun): java-gcj-compat
+BuildRequires:                java-gcj-compat-devel
+Requires(post):                java-gcj-compat
+Requires(postun):        java-gcj-compat
 %endif
 
 %description
@@ -98,30 +94,28 @@ BSD License. Yes, that's right, completely free of cost or restrictions!
 
 %package manual
 Summary:        Manual for %{name}
-Group:          Development/Java
+Group:                Development/Java
 
 %description manual
 Documentation for %{name}.
 
 %package javadoc
-Summary:      Javadoc for %{name}
+Summary:        Javadoc for %{name}
 Group:                Development/Java
-Requires(post): /bin/rm,/bin/ln
-Requires(preun): /bin/rm
 
 %description javadoc
 Javadoc for %{name}.
 
 %package demo
 Summary:        Demo for %{name}
-Group:          Development/Java
-Requires:       %{name} = %{epoch}:%{version}-%{release}
+Group:                Development/Java
+Requires:        %{name} = %{epoch}:%{version}-%{release}
 
 %description demo
 Demonstrations and samples for %{name}.
 
 %prep
-%setup -q -T -c -n %{name}
+%setup -T -c -n %{name}
 (cd ..
 unzip -q %{SOURCE0} 
 )
@@ -140,7 +134,6 @@ chmod -R go=u-w *
 
 %patch0
 %patch1 -p1
-%patch2 -p1
 
 %build
 export CLASSPATH=$(build-classpath \
@@ -165,8 +158,8 @@ install -m 644 lib/%{name}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}-%{version}.jar
 install -d -m 755 $RPM_BUILD_ROOT%{_bindir}
 install -m 755 bin/runUtil.sh $RPM_BUILD_ROOT%{_bindir}/%{name}RunUtil
 # sysv init
-install -d -m 755 $RPM_BUILD_ROOT%{_initrddir}
-install -m 755 bin/%{name} $RPM_BUILD_ROOT%{_initrddir}/%{name}
+install -d -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
+install -m 755 bin/%{name} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/%{name}
 # config
 install -d -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 install -m 644 %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/%{name}
@@ -203,14 +196,8 @@ rm -rf $RPM_BUILD_ROOT
 %pre
 # Add the "hsqldb" user and group
 # we need a shell to be able to use su - later
-%if 0
-%{_sbindir}/groupadd -g 96 -f -r %{name} 2> /dev/null || :
-%{_sbindir}/useradd -u 96 -g %{name} -s /sbin/nologin \
-    -d %{_localstatedir}/lib/%{name} -r %{name} 2> /dev/null || :
-%else
-%_pre_groupadd %{name}
-%_pre_useradd %{name} %{_localstatedir}/lib/%{name} /sbin/nologin
-%endif
+%_pre_groupadd %{name} 96
+%_pre_useradd %{name} %{_localstatedir}/lib/%{name} /sbin/nologin 96
 
 %post
 rm -f %{_localstatedir}/lib/%{name}/lib/hsqldb.jar
@@ -219,11 +206,16 @@ rm -f %{_localstatedir}/lib/%{name}/lib/servlet.jar
     ln -s $(build-classpath hsqldb) hsqldb.jar
     ln -s $(build-classpath servletapi5) servlet.jar
 )
-%{update_gcjdb}
 %_post_service %{name}
 
 %if %{gcj_support}
+%{update_gcjdb}
+%endif
+
 %postun
+%_postun_userdel %{name}
+%_postun_groupdel %{name}
+%if %{gcj_support}
 %{clean_gcjdb}
 %endif
 
@@ -234,18 +226,7 @@ if [ "$1" = "0" ]; then
     #%{_sbindir}/userdel %{name} >> /dev/null 2>&1 || :
     #%{_sbindir}/groupdel %{name} >> /dev/null 2>&1 || :
 fi
-%_postun_userdel %{name}
-%_postun_groupdel %{name}
 %_preun_service %{name}
-
-%post javadoc
-rm -f %{_javadocdir}/%{name}
-ln -s %{name}-%{version} %{_javadocdir}/%{name}
-
-%preun javadoc
-if [ "$1" = "0" ]; then
-    rm -f %{_javadocdir}/%{name}
-fi
 
 %files
 %defattr(0644,root,root,0755)
@@ -253,7 +234,7 @@ fi
 %doc %{_docdir}/%{name}-%{version}/hsqldb_lic.txt
 %{_javadir}/*
 %attr(0755,root,root) %{_bindir}/*
-%attr(0755,root,root) %{_initrddir}/%{name}
+%attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/%{name}
 %config(noreplace) %attr(0644,root,root) %{_sysconfdir}/sysconfig/%{name}
 %attr(0755,hsqldb,hsqldb) %{_localstatedir}/lib/%{name}/data
 %{_localstatedir}/lib/%{name}/lib
@@ -263,7 +244,8 @@ fi
 %dir %{_localstatedir}/lib/%{name}
 
 %if %{gcj_support}
-%attr(-,root,root) %{_libdir}/gcj/%{name}
+%dir %{_libdir}/gcj/%{name}
+%attr(-,root,root) %{_libdir}/gcj/%{name}/*
 %endif
 
 %files manual
