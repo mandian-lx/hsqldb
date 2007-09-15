@@ -39,7 +39,7 @@
 
 Name:                hsqldb
 Version:        1.8.0.8
-Release:        %mkrel 1.0.1
+Release:        %mkrel 1.0.2
 Epoch:                1
 Summary:        Hsqldb Database Engine
 License:        BSD
@@ -71,8 +71,6 @@ Buildroot:        %{_tmppath}/%{name}-%{version}-%{release}-root
 
 %if %{gcj_support}
 BuildRequires:                java-gcj-compat-devel
-Requires(post):                java-gcj-compat
-Requires(postun):        java-gcj-compat
 %endif
 
 %description
