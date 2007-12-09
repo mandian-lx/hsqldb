@@ -35,42 +35,41 @@
 
 %define section                devel
 
-%define cvs_version        1_8_0_8
+%define cvs_version        1_8_0_9
 
-Name:                hsqldb
-Version:        1.8.0.8
-Release:        %mkrel 1.0.2
-Epoch:                1
+Name:           hsqldb
+Version:        1.8.0.9
+Release:        %mkrel 0.0.1
+Epoch:          1
 Summary:        Hsqldb Database Engine
 License:        BSD
-Url:                http://hsqldb.sourceforge.net/
-#http://downloads.sourceforge.net/hsqldb/hsqldb_1_8_0_8.zip
-Source0:        %{name}_%{cvs_version}.zip
+Url:            http://hsqldb.sourceforge.net/
+Source0:        http://downloads.sourceforge.net/hsqldb/hsqldb_%{cvs_version}.zip
 Source1:        %{name}-1.8.0-standard.cfg
 Source2:        %{name}-1.8.0-standard-server.properties
 Source3:        %{name}-1.8.0-standard-webserver.properties
 Source4:        %{name}-1.8.0-standard-sqltool.rc
-Patch0:                %{name}-1.8.0-scripts.patch
-Patch1:                hsqldb-tmp.patch
-Requires:        servletapi5
+Patch0:         %{name}-1.8.0-scripts.patch
+Patch1:         hsqldb-tmp.patch
+Requires:       servletapi5
 Requires(pre):  rpm-helper
-Requires(post):  rpm-helper
-Requires(preun):  rpm-helper
-Requires(postun):  rpm-helper
-Requires(post):   servletapi5
-Requires(pre):        shadow-utils
-BuildRequires:        ant
-BuildRequires:        junit
-BuildRequires:        jpackage-utils >= 0:1.5
-BuildRequires:        servletapi5
-Group:                Development/Java
+Requires(post): rpm-helper
+Requires(preun): rpm-helper
+Requires(postun): rpm-helper
+Requires(post): servletapi5
+Requires(pre):  shadow-utils
+BuildRequires:  ant
+BuildRequires:  junit
+BuildRequires:  jpackage-utils >= 0:1.5
+BuildRequires:  servletapi5
+Group:          Development/Java
 %if ! %{gcj_support}
-Buildarch:        noarch
+Buildarch:      noarch
 %endif
-Buildroot:        %{_tmppath}/%{name}-%{version}-%{release}-root
+Buildroot:      %{_tmppath}/%{name}-%{version}-%{release}-root
 
 %if %{gcj_support}
-BuildRequires:                java-gcj-compat-devel
+BuildRequires:  java-gcj-compat-devel
 %endif
 
 %description
@@ -99,15 +98,15 @@ Documentation for %{name}.
 
 %package javadoc
 Summary:        Javadoc for %{name}
-Group:                Development/Java
+Group:          Development/Java
 
 %description javadoc
 Javadoc for %{name}.
 
 %package demo
 Summary:        Demo for %{name}
-Group:                Development/Java
-Requires:        %{name} = %{epoch}:%{version}-%{release}
+Group:          Development/Java
+Requires:       %{name} = %{epoch}:%{version}-%{release}
 
 %description demo
 Demonstrations and samples for %{name}.
