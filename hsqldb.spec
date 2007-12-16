@@ -39,7 +39,7 @@
 
 Name:           hsqldb
 Version:        1.8.0.9
-Release:        %mkrel 0.0.1
+Release:        %mkrel 0.0.2
 Epoch:          1
 Summary:        Hsqldb Database Engine
 License:        BSD
@@ -60,7 +60,7 @@ Requires(post): servletapi5
 Requires(pre):  shadow-utils
 BuildRequires:  ant
 BuildRequires:  junit
-BuildRequires:  jpackage-utils >= 0:1.5
+BuildRequires:  java-rpmbuild >= 0:1.5
 BuildRequires:  servletapi5
 Group:          Development/Java
 %if ! %{gcj_support}
