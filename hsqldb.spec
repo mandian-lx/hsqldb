@@ -39,7 +39,7 @@
 
 Name:           hsqldb
 Version:        1.8.0.9
-Release:        %mkrel 0.0.3
+Release:        %mkrel 0.0.4
 Epoch:          1
 Summary:        Hsqldb Database Engine
 License:        BSD
@@ -68,9 +68,9 @@ Group:          Development/Java
 Buildarch:      noarch
 %endif
 
-%if %{gcj_support}
+#%if %{gcj_support}
 BuildRequires:  java-gcj-compat-devel
-%endif
+#%endif
 
 %description
 HSQLdb is a relational database engine written in JavaTM , with a JDBC
@@ -141,7 +141,7 @@ jdbc-stdext \
 servletapi5 \
 junit)
 pushd build
-%{ant} jar javadoc
+JAVA_HOME=%{_jvmdir}/java-gcj ant jar javadoc
 popd
 
 %install
@@ -155,8 +155,8 @@ install -m 644 lib/%{name}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}-%{version}.jar
 install -d -m 755 $RPM_BUILD_ROOT%{_bindir}
 install -m 755 bin/runUtil.sh $RPM_BUILD_ROOT%{_bindir}/%{name}RunUtil
 # sysv init
-install -d -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
-install -m 755 bin/%{name} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/%{name}
+install -d -m 755 $RPM_BUILD_ROOT%{_initrddir}
+install -m 755 bin/%{name} $RPM_BUILD_ROOT%{_initrddir}/%{name}
 # config
 install -d -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 install -m 644 %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/%{name}
@@ -231,7 +231,7 @@ fi
 %doc %{_docdir}/%{name}-%{version}/hsqldb_lic.txt
 %{_javadir}/*
 %attr(0755,root,root) %{_bindir}/*
-%attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/%{name}
+%attr(0755,root,root) %{_initrddir}/%{name}
 %config(noreplace) %attr(0644,root,root) %{_sysconfdir}/sysconfig/%{name}
 %attr(0755,hsqldb,hsqldb) %{_localstatedir}/lib/%{name}/data
 %{_localstatedir}/lib/%{name}/lib
