@@ -39,7 +39,7 @@
 
 Name:           hsqldb
 Version:        1.8.0.9
-Release:        %mkrel 0.0.4
+Release:        %mkrel 0.0.5
 Epoch:          1
 Summary:        Hsqldb Database Engine
 License:        BSD
@@ -92,7 +92,7 @@ BSD License. Yes, that's right, completely free of cost or restrictions!
 
 %package manual
 Summary:        Manual for %{name}
-Group:                Development/Java
+Group:          Development/Java
 
 %description manual
 Documentation for %{name}.
