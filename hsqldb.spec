@@ -194,8 +194,16 @@ rm -rf $RPM_BUILD_ROOT
 %pre
 # Add the "hsqldb" user and group
 # we need a shell to be able to use su - later
-%_pre_groupadd %{name} 96
-%_pre_useradd %{name} %{_localstatedir}/lib/%{name} /sbin/nologin 96
+
+# (Anssi 01/2008) Previously %_pre_groupadd was used here together with
+# %_pre_useradd, causing an error situation where group is created, but
+# the user is not:
+#    useradd: group hsqldb exists - if you want to add this user to that group, use -g.
+# Therefore we remove the hsqldb group if it exists without the corresponding
+# user.
+getent group %{name} >/dev/null && ! getent passwd %{name} >/dev/null && groupdel %{name}
+
+%_pre_useradd %{name} %{_localstatedir}/lib/%{name} /sbin/nologin
 
 %post
 rm -f %{_localstatedir}/lib/%{name}/lib/hsqldb.jar
@@ -212,7 +220,6 @@ rm -f %{_localstatedir}/lib/%{name}/lib/servlet.jar
 
 %postun
 %_postun_userdel %{name}
-%_postun_groupdel %{name}
 %if %{gcj_support}
 %{clean_gcjdb}
 %endif
