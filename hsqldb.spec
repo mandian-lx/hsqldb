@@ -39,7 +39,7 @@
 
 Name:           hsqldb
 Version:        1.8.0.9
-Release:        %mkrel 0.0.5
+Release:        %mkrel 0.0.6
 Epoch:          1
 Summary:        Hsqldb Database Engine
 License:        BSD
@@ -195,8 +195,8 @@ rm -rf $RPM_BUILD_ROOT
 # Add the "hsqldb" user and group
 # we need a shell to be able to use su - later
 
-# (Anssi 01/2008) Previously %_pre_groupadd was used here together with
-# %_pre_useradd, causing an error situation where group is created, but
+# (Anssi 01/2008) Previously _pre_groupadd was used here together with
+# _pre_useradd, causing an error situation where group is created, but
 # the user is not:
 #    useradd: group hsqldb exists - if you want to add this user to that group, use -g.
 # Therefore we remove the hsqldb group if it exists without the corresponding
