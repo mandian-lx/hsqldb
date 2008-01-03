@@ -50,7 +50,8 @@ Source2:        %{name}-1.8.0-standard-server.properties
 Source3:        %{name}-1.8.0-standard-webserver.properties
 Source4:        %{name}-1.8.0-standard-sqltool.rc
 Patch0:         %{name}-1.8.0-scripts.patch
-Patch1:         hsqldb-tmp.patch
+Patch1:         %{name}-tmp.patch
+Patch2:         %{name}-initscript-restart.patch
 Requires:       servletapi5
 Requires(pre):  rpm-helper
 Requires(post): rpm-helper
@@ -202,8 +203,8 @@ rm -rf $RPM_BUILD_ROOT
 # Therefore we remove the hsqldb group if it exists without the corresponding
 # user.
 getent group %{name} >/dev/null && ! getent passwd %{name} >/dev/null && groupdel %{name}
-
-%_pre_useradd %{name} %{_localstatedir}/lib/%{name} /sbin/nologin
+getent passwd %{name} >/dev/null && chsh -s /bin/sh %{name}
+%_pre_useradd %{name} %{_localstatedir}/lib/%{name} /bin/sh
 
 %post
 rm -f %{_localstatedir}/lib/%{name}/lib/hsqldb.jar
