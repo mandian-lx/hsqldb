@@ -51,7 +51,7 @@ Source3:        %{name}-1.8.0-standard-webserver.properties
 Source4:        %{name}-1.8.0-standard-sqltool.rc
 Patch0:         %{name}-1.8.0-scripts.patch
 Patch1:         %{name}-tmp.patch
-Patch2:         %{name}-initscript-restart.patch
+Patch2:         %{name}-1.8.0-initscript-restart.patch
 Requires:       servletapi5
 Requires(pre):  rpm-helper
 Requires(post): rpm-helper
