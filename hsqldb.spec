@@ -39,7 +39,7 @@
 
 Name:           hsqldb
 Version:        1.8.0.9
-Release:        %mkrel 0.0.8
+Release:        %mkrel 0.0.9
 Epoch:          1
 Summary:        Hsqldb Database Engine
 License:        BSD
@@ -202,8 +202,8 @@ rm -rf $RPM_BUILD_ROOT
 #    useradd: group hsqldb exists - if you want to add this user to that group, use -g.
 # Therefore we remove the hsqldb group if it exists without the corresponding
 # user.
-getent group %{name} >/dev/null && ! getent passwd %{name} >/dev/null && groupdel %{name}
-getent passwd %{name} >/dev/null && chsh -s /bin/sh %{name}
+getent group %{name} >/dev/null && ! getent passwd %{name} >/dev/null && groupdel %{name}  >/dev/null
+getent passwd %{name} >/dev/null && chsh -s /bin/sh %{name} >/dev/null
 %_pre_useradd %{name} %{_localstatedir}/lib/%{name} /bin/sh
 
 %post
