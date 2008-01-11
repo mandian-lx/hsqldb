@@ -62,7 +62,11 @@ Requires(post):	jpackage-utils
 Requires(pre):  shadow-utils
 BuildRequires:  ant
 BuildRequires:  junit
+%if %mdkversion >= 200810
 BuildRequires:  java-rpmbuild >= 0:1.5
+%else
+BuildRequires:  java-1.7.0-icedtea-devel
+%endif
 BuildRequires:  servletapi5
 Group:          Development/Java
 %if ! %{gcj_support}
