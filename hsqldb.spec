@@ -65,7 +65,7 @@ BuildRequires:  junit
 %if %mdkversion >= 200810
 BuildRequires:  java-rpmbuild >= 0:1.5
 %else
-BuildRequires:  java-1.7.0-icedtea-devel
+BuildRequires:  java-devel-gcj
 %endif
 BuildRequires:  servletapi5
 Group:          Development/Java
