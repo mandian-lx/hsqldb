@@ -39,7 +39,7 @@
 
 Name:           hsqldb
 Version:        1.8.0.9
-Release:        %mkrel 0.0.9
+Release:        %mkrel 0.0.10
 Epoch:          1
 Summary:        Hsqldb Database Engine
 License:        BSD
@@ -211,11 +211,11 @@ getent passwd %{name} >/dev/null && chsh -s /bin/sh %{name} >/dev/null
 %_pre_useradd %{name} %{_localstatedir}/lib/%{name} /bin/sh
 
 %post
-rm -f %{_localstatedir}/lib/%{name}/lib/hsqldb.jar
-rm -f %{_localstatedir}/lib/%{name}/lib/servlet.jar
+%{__rm} -f %{_localstatedir}/lib/%{name}/lib/hsqldb.jar
+%{__rm} -f %{_localstatedir}/lib/%{name}/lib/servlet.jar
 (cd %{_localstatedir}/lib/%{name}/lib
-    ln -s $(build-classpath hsqldb) hsqldb.jar
-    ln -s $(build-classpath servletapi5) servlet.jar
+    %{__ln_s} %{_javadir}/hsqldb.jar hsqldb.jar
+    %{__ln_s} %{_javadir}/servletapi5.jar servlet.jar
 )
 %_post_service %{name}
 
@@ -231,10 +231,12 @@ rm -f %{_localstatedir}/lib/%{name}/lib/servlet.jar
 
 %preun
 if [ "$1" = "0" ]; then
-    rm -f %{_localstatedir}/lib/%{name}/lib/hsqldb.jar
-    rm -f %{_localstatedir}/lib/%{name}/lib/servlet.jar
-    #%{_sbindir}/userdel %{name} >> /dev/null 2>&1 || :
-    #%{_sbindir}/groupdel %{name} >> /dev/null 2>&1 || :
+    %{__rm} -f %{_localstatedir}/lib/%{name}/lib/hsqldb.jar
+    %{__rm} -f %{_localstatedir}/lib/%{name}/lib/servlet.jar
+%if 0
+    %{_sbindir}/userdel %{name} >> /dev/null 2>&1 || :
+    %{_sbindir}/groupdel %{name} >> /dev/null 2>&1 || :
+%endif
 fi
 %_preun_service %{name}
 
