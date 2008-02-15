@@ -39,7 +39,7 @@
 
 Name:           hsqldb
 Version:        1.8.0.9
-Release:        %mkrel 0.0.10
+Release:        %mkrel 0.0.11
 Epoch:          1
 Summary:        Hsqldb Database Engine
 License:        BSD
@@ -79,21 +79,8 @@ BuildRequires:  java-gcj-compat-devel
 #%endif
 
 %description
-HSQLdb is a relational database engine written in JavaTM , with a JDBC
-driver, supporting a subset of ANSI-92 SQL. It offers a small (about
-100k), fast database engine which offers both in memory and disk based
-tables. Embedded and server modes are available. Additionally, it
-includes tools such as a minimal web server, in-memory query and
-management tools (can be run as applets or servlets, too) and a number
-of demonstration examples.
-Downloaded code should be regarded as being of production quality. The
-product is currently being used as a database and persistence engine in
-many Open Source Software projects and even in commercial projects and
-products! In it's current version it is extremely stable and reliable.
-It is best known for its small size, ability to execute completely in
-memory and its speed. Yet it is a completely functional relational
-database management system that is completely free under the Modified
-BSD License. Yes, that's right, completely free of cost or restrictions!
+This package contains the hsqldb java classes. The server is contained
+in the package %{name}-server.
 
 %package manual
 Summary:        Manual for %{name}
@@ -117,6 +104,31 @@ Requires:       %{name} = %{epoch}:%{version}-%{release}
 %description demo
 Demonstrations and samples for %{name}.
 
+%package server
+Summary:	Hsqldb database server
+Group:		System/Servers
+Conflicts:	hsqldb < 1:1.8.0.9-0.0.11
+Requires:	%{name} = %{epoch}:%{version}-%{release}
+
+%description server
+HSQLdb is a relational database engine written in JavaTM , with a JDBC
+driver, supporting a subset of ANSI-92 SQL. It offers a small (about
+100k), fast database engine which offers both in memory and disk based
+tables. Embedded and server modes are available. Additionally, it
+includes tools such as a minimal web server, in-memory query and
+management tools (can be run as applets or servlets, too) and a number
+of demonstration examples.
+Downloaded code should be regarded as being of production quality. The
+product is currently being used as a database and persistence engine in
+many Open Source Software projects and even in commercial projects and
+products! In it's current version it is extremely stable and reliable.
+It is best known for its small size, ability to execute completely in
+memory and its speed. Yet it is a completely functional relational
+database management system that is completely free under the Modified
+BSD License. Yes, that's right, completely free of cost or restrictions!
+
+This package contains the server.
+
 %prep
 %setup -T -c -n %{name}
 (cd ..
@@ -137,6 +149,12 @@ chmod -R go=u-w *
 
 %patch0
 %patch1 -p1
+
+cat > README.1.8.0.9-0.0.11.upgrade.urpmi <<EOF
+The server has been removed from the hsqldb package and moved to a
+separate package named %{name}-server as it is not needed by most users.
+Install it if you wish to use the Hsqldb server.
+EOF
 
 %build
 export CLASSPATH=$(build-classpath \
@@ -196,7 +214,7 @@ cp index.html $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-%pre
+%pre server
 # Add the "hsqldb" user and group
 # we need a shell to be able to use su - later
 
@@ -210,7 +228,7 @@ getent group %{name} >/dev/null && ! getent passwd %{name} >/dev/null && groupde
 getent passwd %{name} >/dev/null && chsh -s /bin/sh %{name} >/dev/null
 %_pre_useradd %{name} %{_localstatedir}/lib/%{name} /bin/sh
 
-%post
+%post server
 %{__rm} -f %{_localstatedir}/lib/%{name}/lib/hsqldb.jar
 %{__rm} -f %{_localstatedir}/lib/%{name}/lib/servlet.jar
 (cd %{_localstatedir}/lib/%{name}/lib
@@ -219,17 +237,20 @@ getent passwd %{name} >/dev/null && chsh -s /bin/sh %{name} >/dev/null
 )
 %_post_service %{name}
 
+%post
 %if %{gcj_support}
 %{update_gcjdb}
 %endif
 
-%postun
+%postun server
 %_postun_userdel %{name}
+
+%postun
 %if %{gcj_support}
 %{clean_gcjdb}
 %endif
 
-%preun
+%preun server
 if [ "$1" = "0" ]; then
     %{__rm} -f %{_localstatedir}/lib/%{name}/lib/hsqldb.jar
     %{__rm} -f %{_localstatedir}/lib/%{name}/lib/servlet.jar
@@ -244,7 +265,15 @@ fi
 %defattr(0644,root,root,0755)
 %dir %{_docdir}/%{name}-%{version}
 %doc %{_docdir}/%{name}-%{version}/hsqldb_lic.txt
+%doc README*.urpmi
 %{_javadir}/*
+%if %{gcj_support}
+%dir %{_libdir}/gcj/%{name}
+%attr(-,root,root) %{_libdir}/gcj/%{name}/*
+%endif
+
+%files server
+%defattr(0644,root,root,0755)
 %attr(0755,root,root) %{_bindir}/*
 %attr(0755,root,root) %{_initrddir}/%{name}
 %config(noreplace) %attr(0644,root,root) %{_sysconfdir}/sysconfig/%{name}
@@ -254,11 +283,6 @@ fi
 %attr(0644,root,root) %{_localstatedir}/lib/%{name}/webserver.properties
 %attr(0600,hsqldb,hsqldb) %{_localstatedir}/lib/%{name}/sqltool.rc
 %dir %{_localstatedir}/lib/%{name}
-
-%if %{gcj_support}
-%dir %{_libdir}/gcj/%{name}
-%attr(-,root,root) %{_libdir}/gcj/%{name}/*
-%endif
 
 %files manual
 %defattr(0644,root,root,0755)
