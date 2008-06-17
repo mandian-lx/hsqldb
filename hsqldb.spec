@@ -30,16 +30,15 @@
 
 %define _localstatedir %{_var}
 
-%define _with_gcj_support 1
-%define gcj_support %{?_with_gcj_support:1}%{!?_with_gcj_support:%{?_without_gcj_support:0}%{!?_without_gcj_support:%{?_gcj_support:%{_gcj_support}}%{!?_gcj_support:0}}}
+%define gcj_support 0
 
 %define section                devel
 
-%define cvs_version        1_8_0_9
+%define cvs_version        1_8_0_10
 
 Name:           hsqldb
-Version:        1.8.0.9
-Release:        %mkrel 0.0.11
+Version:        1.8.0.10
+Release:        %mkrel 0.0.1
 Epoch:          1
 Summary:        Hsqldb Database Engine
 License:        BSD
@@ -74,9 +73,9 @@ Buildarch:      noarch
 %endif
 Buildroot:      %{_tmppath}/%{name}-%{version}-%{release}-root
 
-#%if %{gcj_support}
+%if %{gcj_support}
 BuildRequires:  java-gcj-compat-devel
-#%endif
+%endif
 
 %description
 This package contains the hsqldb java classes. The server is contained
@@ -150,7 +149,7 @@ chmod -R go=u-w *
 %patch0
 %patch1 -p1
 
-cat > README.1.8.0.9-0.0.11.upgrade.urpmi <<EOF
+cat > README.%{version}-%{release}.upgrade.urpmi <<EOF
 The server has been removed from the hsqldb package and moved to a
 separate package named %{name}-server as it is not needed by most users.
 Install it if you wish to use the Hsqldb server.
@@ -165,7 +164,7 @@ jdbc-stdext \
 servletapi5 \
 junit)
 pushd build
-JAVA_HOME=%{_jvmdir}/java-gcj ant jar javadoc
+%ant jar javadoc
 popd
 
 %install
@@ -207,9 +206,7 @@ install -d -m 755 $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
 cp -r doc/* $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
 cp index.html $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
 
-%if %{gcj_support}
-%{_bindir}/aot-compile-rpm
-%endif
+%{gcj_compile}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -267,10 +264,7 @@ fi
 %doc %{_docdir}/%{name}-%{version}/hsqldb_lic.txt
 %doc README*.urpmi
 %{_javadir}/*
-%if %{gcj_support}
-%dir %{_libdir}/gcj/%{name}
-%attr(-,root,root) %{_libdir}/gcj/%{name}/*
-%endif
+%{gcj_files}
 
 %files server
 %defattr(0644,root,root,0755)
