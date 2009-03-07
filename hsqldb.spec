@@ -38,7 +38,7 @@
 
 Name:           hsqldb
 Version:        1.8.0.10
-Release:        %mkrel 0.0.1
+Release:        %mkrel 0.0.2
 Epoch:          1
 Summary:        Hsqldb Database Engine
 License:        BSD
