@@ -28,88 +28,39 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-%define _localstatedir %{_var}
+%global cvs_version 1_8_1_3
 
-%define gcj_support 0
-
-%define section                devel
-
-%define cvs_version        1_8_0_10
-
-Name:           hsqldb
-Version:        1.8.0.10
-Release:        %mkrel 0.0.6
-Epoch:          1
-Summary:        Hsqldb Database Engine
-License:        BSD
-Url:            http://hsqldb.sourceforge.net/
-Source0:        http://downloads.sourceforge.net/hsqldb/hsqldb_%{cvs_version}.zip
-Source1:        %{name}-1.8.0-standard.cfg
-Source2:        %{name}-1.8.0-standard-server.properties
-Source3:        %{name}-1.8.0-standard-webserver.properties
-Source4:        %{name}-1.8.0-standard-sqltool.rc
-Patch0:         %{name}-1.8.0-scripts.patch
-Patch1:         %{name}-tmp.patch
-Patch2:         %{name}-1.8.0-initscript-restart.patch
-Requires:       servletapi5
-Requires(pre):  rpm-helper
-Requires(post): rpm-helper
-Requires(preun): rpm-helper
-Requires(postun): rpm-helper
-Requires(post): servletapi5
-Requires(post):	jpackage-utils
+Name:       hsqldb
+Version:    1.8.1.3
+Release:    3
+Epoch:	    1
+Summary:    HyperSQL Database Engine
+License:    BSD
+URL:        http://hsqldb.sourceforge.net/
+Source0:    http://downloads.sourceforge.net/hsqldb/%{name}_%{cvs_version}.zip
+Source1:    %{name}-1.8.0-standard.cfg
+Source2:    %{name}-1.8.0-standard-server.properties
+Source3:    %{name}-1.8.0-standard-webserver.properties
+Source4:    %{name}-1.8.0-standard-sqltool.rc
+Source5:    http://mirrors.ibiblio.org/pub/mirrors/maven2/%{name}/%{name}/1.8.0.10/%{name}-1.8.0.10.pom
+Patch0:     %{name}-1.8.0-scripts.patch
+Patch1:     hsqldb-tmp.patch
+Patch2:     %{name}-1.8.0-specify-su-shell.patch
+Requires:   servlet25
+Requires(post):   coreutils
+Requires(preun):  coreutils
+Requires(preun): initscripts
 Requires(pre):  shadow-utils
+Requires(post): jpackage-utils
+Requires(postun): jpackage-utils
 BuildRequires:  ant
 BuildRequires:  junit
-%if %mdkversion >= 200810
-BuildRequires:  java-rpmbuild >= 0:1.5
-%else
-BuildRequires:  java-devel-gcj
-%endif
-BuildRequires:  servletapi5
-Group:          Development/Java
-%if ! %{gcj_support}
-Buildarch:      noarch
-%endif
-Buildroot:      %{_tmppath}/%{name}-%{version}-%{release}-root
-
-%if %{gcj_support}
-BuildRequires:  java-gcj-compat-devel
-%endif
+BuildRequires:  jpackage-utils >= 0:1.5
+BuildRequires:  servlet25
+Group:      Databases
+BuildArch:  noarch
 
 %description
-This package contains the hsqldb java classes. The server is contained
-in the package %{name}-server.
-
-%package manual
-Summary:        Manual for %{name}
-Group:          Development/Java
-
-%description manual
-Documentation for %{name}.
-
-%package javadoc
-Summary:        Javadoc for %{name}
-Group:          Development/Java
-
-%description javadoc
-Javadoc for %{name}.
-
-%package demo
-Summary:        Demo for %{name}
-Group:          Development/Java
-Requires:       %{name} = %{epoch}:%{version}-%{release}
-
-%description demo
-Demonstrations and samples for %{name}.
-
-%package server
-Summary:	Hsqldb database server
-Group:		System/Servers
-Conflicts:	hsqldb < 1:1.8.0.9-0.0.11
-Requires:	%{name} = %{epoch}:%{version}-%{release}
-
-%description server
 HSQLdb is a relational database engine written in JavaTM , with a JDBC
 driver, supporting a subset of ANSI-92 SQL. It offers a small (about
 100k), fast database engine which offers both in memory and disk based
@@ -126,7 +77,28 @@ memory and its speed. Yet it is a completely functional relational
 database management system that is completely free under the Modified
 BSD License. Yes, that's right, completely free of cost or restrictions!
 
-This package contains the server.
+%package manual
+Summary:    Manual for %{name}
+Group:      Development/Java
+
+%description manual
+Documentation for %{name}.
+
+%package javadoc
+Summary:    Javadoc for %{name}
+Group:      Development/Java
+Requires:   jpackage-utils
+
+%description javadoc
+Javadoc for %{name}.
+
+%package demo
+Summary:    Demo for %{name}
+Group:      Development/Java
+Requires:   %{name} = %{epoch}:%{version}-%{release}
+
+%description demo
+Demonstrations and samples for %{name}.
 
 %prep
 %setup -T -c -n %{name}
@@ -143,43 +115,31 @@ find . -name "*.class" -exec rm -f {} \;
 find . -name "*.war" -exec rm -f {} \;
 # correct silly permissions
 chmod -R go=u-w *
-%{_bindir}/find . -type f -name '*.css' -o -name '*.html' -o -name '*.txt' | \
-  %{_bindir}/xargs -t %{__perl} -pi -e 's/\r$//g'
 
 %patch0
 %patch1 -p1
+%patch2
 
-cat > README.%{version}-%{release}.upgrade.urpmi <<EOF
-The server has been removed from the hsqldb package and moved to a
-separate package named %{name}-server as it is not needed by most users.
-Install it if you wish to use the Hsqldb server.
-EOF
+cp %{SOURCE5} ./pom.xml
 
 %build
 export CLASSPATH=$(build-classpath \
-jsse/jsse \
-jsse/jnet \
-jsse/jcert \
-jdbc-stdext \
-servletapi5 \
+servlet \
 junit)
 pushd build
-%ant jar javadoc
+ant jar javadoc
 popd
 
 %install
-%{__rm} -rf %{buildroot}
-
 # jar
 install -d -m 755 $RPM_BUILD_ROOT%{_javadir}
-install -m 644 lib/%{name}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}-%{version}.jar
-(cd $RPM_BUILD_ROOT%{_javadir} && for jar in *-%{version}.jar; do ln -sf ${jar} ${jar/-%{version}/}; done)
+install -m 644 lib/%{name}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}.jar
 # bin
 install -d -m 755 $RPM_BUILD_ROOT%{_bindir}
 install -m 755 bin/runUtil.sh $RPM_BUILD_ROOT%{_bindir}/%{name}RunUtil
 # sysv init
-install -d -m 755 $RPM_BUILD_ROOT%{_initrddir}
-install -m 755 bin/%{name} $RPM_BUILD_ROOT%{_initrddir}/%{name}
+install -d -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
+install -m 755 bin/%{name} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/%{name}
 # config
 install -d -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 install -m 644 %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/%{name}
@@ -190,102 +150,85 @@ install -m 644 %{SOURCE3} $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/webserver
 install -m 600 %{SOURCE4} $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/sqltool.rc
 # lib
 install -d -m 755 $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/lib
-install -m 644 lib/functions         $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/lib
+install -m 644 lib/functions $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/lib
 # data
 install -d -m 755 $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/data
 # demo
 install -d -m 755 $RPM_BUILD_ROOT%{_datadir}/%{name}/demo
-install -m 755 demo/*.sh         $RPM_BUILD_ROOT%{_datadir}/%{name}/demo
-install -m 644 demo/*.html         $RPM_BUILD_ROOT%{_datadir}/%{name}/demo
+install -m 755 demo/*.sh $RPM_BUILD_ROOT%{_datadir}/%{name}/demo
+install -m 644 demo/*.html $RPM_BUILD_ROOT%{_datadir}/%{name}/demo
 # javadoc
-install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}/%{name}-%{version}
-cp -r doc/src/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}-%{version}
+install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+cp -r doc/src/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 rm -rf doc/src
 # manual
 install -d -m 755 $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
 cp -r doc/* $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
 cp index.html $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
 
-%{gcj_compile}
+# Maven metadata
+install -pD -T -m 644 pom.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP-%{name}.pom
+%add_to_maven_depmap %{name} %{name} %{version} JPP %{name}
 
-%clean
-rm -rf $RPM_BUILD_ROOT
+pushd $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/lib
+    ln -s $(build-classpath hsqldb) hsqldb.jar
+    ln -s $(build-classpath servlet) servlet.jar
+popd
 
-%pre server
+%preun
+if [ $1 = 0 ] ; then
+    /sbin/service %{name} stop >/dev/null 2>&1
+    /sbin/chkconfig --del %{name}
+fi
+
+%pre
 # Add the "hsqldb" user and group
 # we need a shell to be able to use su - later
-
-# (Anssi 01/2008) Previously _pre_groupadd was used here together with
-# _pre_useradd, causing an error situation where group is created, but
-# the user is not:
-#    useradd: group hsqldb exists - if you want to add this user to that group, use -g.
-# Therefore we remove the hsqldb group if it exists without the corresponding
-# user.
-getent group %{name} >/dev/null && ! getent passwd %{name} >/dev/null && groupdel %{name}  >/dev/null
-getent passwd %{name} >/dev/null && chsh -s /bin/sh %{name} >/dev/null
-%_pre_useradd %{name} %{_localstatedir}/lib/%{name} /bin/sh
-
-%post server
-%{__rm} -f %{_localstatedir}/lib/%{name}/lib/hsqldb.jar
-%{__rm} -f %{_localstatedir}/lib/%{name}/lib/servlet.jar
-(cd %{_localstatedir}/lib/%{name}/lib
-    %{__ln_s} %{_javadir}/hsqldb.jar hsqldb.jar
-    %{__ln_s} %{_javadir}/servletapi5.jar servlet.jar
-)
-%_post_service %{name}
+%{_sbindir}/groupadd -g 96 -f -r %{name} 2> /dev/null || :
+%{_sbindir}/useradd -u 96 -g %{name} -s /sbin/nologin \
+    -d %{_localstatedir}/lib/%{name} -r %{name} 2> /dev/null || :
 
 %post
-%if %{gcj_support}
-%{update_gcjdb}
-%endif
+# This adds the proper /etc/rc*.d links for the script
+/sbin/chkconfig --add %{name}
 
-%postun server
-%_postun_userdel %{name}
+%update_maven_depmap
 
 %postun
-%if %{gcj_support}
-%{clean_gcjdb}
-%endif
+%update_maven_depmap
 
-%preun server
-if [ "$1" = "0" ]; then
-    %{__rm} -f %{_localstatedir}/lib/%{name}/lib/hsqldb.jar
-    %{__rm} -f %{_localstatedir}/lib/%{name}/lib/servlet.jar
-%if 0
-    %{_sbindir}/userdel %{name} >> /dev/null 2>&1 || :
-    %{_sbindir}/groupdel %{name} >> /dev/null 2>&1 || :
-%endif
-fi
-%_preun_service %{name}
+%pre javadoc
+# workaround for rpm bug, can be removed in F-17
+[ $1 -gt 1 ] && [ -L %{_javadocdir}/%{name} ] && \
+rm -rf $(readlink -f %{_javadocdir}/%{name}) %{_javadocdir}/%{name} || :
 
 %files
-%defattr(0644,root,root,0755)
-%dir %{_docdir}/%{name}-%{version}
-%doc %{_docdir}/%{name}-%{version}/hsqldb_lic.txt
-%doc README*.urpmi
+%defattr(-,root,root,-)
+%doc doc/hsqldb_lic.txt
 %{_javadir}/*
-%{gcj_files}
-
-%files server
-%defattr(0644,root,root,0755)
 %attr(0755,root,root) %{_bindir}/*
-%attr(0755,root,root) %{_initrddir}/%{name}
-%config(noreplace) %attr(0644,root,root) %{_sysconfdir}/sysconfig/%{name}
-%attr(0755,hsqldb,hsqldb) %{_localstatedir}/lib/%{name}/data
+%attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/%{name}
+%config(noreplace) %{_sysconfdir}/sysconfig/%{name}
+%attr(0700,hsqldb,hsqldb) %{_localstatedir}/lib/%{name}/data
 %{_localstatedir}/lib/%{name}/lib
-%attr(0644,root,root) %{_localstatedir}/lib/%{name}/server.properties
-%attr(0644,root,root) %{_localstatedir}/lib/%{name}/webserver.properties
+%{_localstatedir}/lib/%{name}/server.properties
+%{_localstatedir}/lib/%{name}/webserver.properties
 %attr(0600,hsqldb,hsqldb) %{_localstatedir}/lib/%{name}/sqltool.rc
 %dir %{_localstatedir}/lib/%{name}
+%{_mavendepmapfragdir}/*
+%{_mavenpomdir}/*
 
 %files manual
-%defattr(0644,root,root,0755)
+%defattr(-,root,root,-)
 %doc %{_docdir}/%{name}-%{version}
+%doc doc/hsqldb_lic.txt
 
 %files javadoc
-%defattr(0644,root,root,0755)
-%{_javadocdir}/%{name}-%{version}
+%defattr(-,root,root,-)
+%{_javadocdir}/%{name}
+%doc doc/hsqldb_lic.txt
 
 %files demo
-%defattr(-,root,root,0755)
+%defattr(-,root,root,-)
 %{_datadir}/%{name}
+
