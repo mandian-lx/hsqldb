@@ -132,45 +132,45 @@ popd
 
 %install
 # jar
-install -d -m 755 $RPM_BUILD_ROOT%{_javadir}
-install -m 644 lib/%{name}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}.jar
+install -d -m 755 %{buildroot}%{_javadir}
+install -m 644 lib/%{name}.jar %{buildroot}%{_javadir}/%{name}.jar
 # bin
-install -d -m 755 $RPM_BUILD_ROOT%{_bindir}
-install -m 755 bin/runUtil.sh $RPM_BUILD_ROOT%{_bindir}/%{name}RunUtil
+install -d -m 755 %{buildroot}%{_bindir}
+install -m 755 bin/runUtil.sh %{buildroot}%{_bindir}/%{name}RunUtil
 # sysv init
-install -d -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
-install -m 755 bin/%{name} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/%{name}
+install -d -m 755 %{buildroot}%{_sysconfdir}/rc.d/init.d
+install -m 755 bin/%{name} %{buildroot}%{_sysconfdir}/rc.d/init.d/%{name}
 # config
-install -d -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
-install -m 644 %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/%{name}
+install -d -m 755 %{buildroot}%{_sysconfdir}/sysconfig
+install -m 644 %{SOURCE1} %{buildroot}%{_sysconfdir}/sysconfig/%{name}
 # serverconfig
-install -d -m 755 $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}
-install -m 644 %{SOURCE2} $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/server.properties
-install -m 644 %{SOURCE3} $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/webserver.properties
-install -m 600 %{SOURCE4} $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/sqltool.rc
+install -d -m 755 %{buildroot}%{_localstatedir}/lib/%{name}
+install -m 644 %{SOURCE2} %{buildroot}%{_localstatedir}/lib/%{name}/server.properties
+install -m 644 %{SOURCE3} %{buildroot}%{_localstatedir}/lib/%{name}/webserver.properties
+install -m 600 %{SOURCE4} %{buildroot}%{_localstatedir}/lib/%{name}/sqltool.rc
 # lib
-install -d -m 755 $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/lib
-install -m 644 lib/functions $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/lib
+install -d -m 755 %{buildroot}%{_localstatedir}/lib/%{name}/lib
+install -m 644 lib/functions %{buildroot}%{_localstatedir}/lib/%{name}/lib
 # data
-install -d -m 755 $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/data
+install -d -m 755 %{buildroot}%{_localstatedir}/lib/%{name}/data
 # demo
-install -d -m 755 $RPM_BUILD_ROOT%{_datadir}/%{name}/demo
-install -m 755 demo/*.sh $RPM_BUILD_ROOT%{_datadir}/%{name}/demo
-install -m 644 demo/*.html $RPM_BUILD_ROOT%{_datadir}/%{name}/demo
+install -d -m 755 %{buildroot}%{_datadir}/%{name}/demo
+install -m 755 demo/*.sh %{buildroot}%{_datadir}/%{name}/demo
+install -m 644 demo/*.html %{buildroot}%{_datadir}/%{name}/demo
 # javadoc
-install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}/%{name}
-cp -r doc/src/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+install -d -m 755 %{buildroot}%{_javadocdir}/%{name}
+cp -r doc/src/* %{buildroot}%{_javadocdir}/%{name}
 rm -rf doc/src
 # manual
-install -d -m 755 $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
-cp -r doc/* $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
-cp index.html $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
+install -d -m 755 %{buildroot}%{_docdir}/%{name}-%{version}
+cp -r doc/* %{buildroot}%{_docdir}/%{name}-%{version}
+cp index.html %{buildroot}%{_docdir}/%{name}-%{version}
 
 # Maven metadata
-install -pD -T -m 644 pom.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP-%{name}.pom
+install -pD -T -m 644 pom.xml %{buildroot}%{_mavenpomdir}/JPP-%{name}.pom
 %add_to_maven_depmap %{name} %{name} %{version} JPP %{name}
 
-pushd $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/lib
+pushd %{buildroot}%{_localstatedir}/lib/%{name}/lib
     ln -s $(build-classpath hsqldb) hsqldb.jar
     ln -s $(build-classpath servlet) servlet.jar
 popd
