@@ -1,7 +1,2 @@
 sources:
-  "hsqldb-1.8.0.10.pom:"	d8efc6e6f6e14ee9244136b0580ab6014ffeb4ea
-  "hsqldb-1.8.0-standard.cfg:"	f1ddf9ddf9c89c52c0779e4ead9558b57952b07c
-  "hsqldb-1.8.0-standard-server.properties:"	ab5cf8e0c2fed2bca1454bb3e1b1620385ff11ce
-  "hsqldb-1.8.0-standard-sqltool.rc:"	ee15b0a15d6aee96594b4f878d5f6a0aee34aca5
-  "hsqldb-1.8.0-standard-webserver.properties:"	95858782f5dca24894e1a45b1c783693e9512cf2
-  "hsqldb_1_8_1_3.zip:"	15b1ece2f131bdb007cae5762f631e8d5fd6eaae
+  "hsqldb_1_8_1_3.zip": 15b1ece2f131bdb007cae5762f631e8d5fd6eaae
