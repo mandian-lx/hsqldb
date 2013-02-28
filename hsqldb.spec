@@ -32,7 +32,7 @@
 
 Name:       hsqldb
 Version:    1.8.1.3
-Release:    5
+Release:    6
 Epoch:	    1
 Summary:    HyperSQL Database Engine
 License:    BSD
