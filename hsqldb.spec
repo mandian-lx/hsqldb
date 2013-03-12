@@ -46,6 +46,7 @@ Source5:    http://mirrors.ibiblio.org/pub/mirrors/maven2/%{name}/%{name}/1.8.0.
 Patch0:     %{name}-1.8.0-scripts.patch
 Patch1:     hsqldb-tmp.patch
 Patch2:     %{name}-1.8.0-specify-su-shell.patch
+Patch3:	    hsqldb-1.8.1.3-java7.patch
 Requires:   servlet25
 Requires(post):   coreutils
 Requires(preun):  coreutils
@@ -119,6 +120,7 @@ chmod -R go=u-w *
 %patch0
 %patch1 -p1
 %patch2
+%patch3 -p1
 
 cp %{SOURCE5} ./pom.xml
 
