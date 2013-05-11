@@ -30,36 +30,34 @@
 
 %global cvs_version 1_8_1_3
 
-Name:       hsqldb
-Version:    1.8.1.3
-Release:    6
-Epoch:	    1
-Summary:    HyperSQL Database Engine
-License:    BSD
-URL:        http://hsqldb.sourceforge.net/
-Source0:    http://downloads.sourceforge.net/hsqldb/%{name}_%{cvs_version}.zip
-Source1:    %{name}-1.8.0-standard.cfg
-Source2:    %{name}-1.8.0-standard-server.properties
-Source3:    %{name}-1.8.0-standard-webserver.properties
-Source4:    %{name}-1.8.0-standard-sqltool.rc
-Source5:    http://mirrors.ibiblio.org/pub/mirrors/maven2/%{name}/%{name}/1.8.0.10/%{name}-1.8.0.10.pom
-Patch0:     %{name}-1.8.0-scripts.patch
-Patch1:     hsqldb-tmp.patch
-Patch2:     %{name}-1.8.0-specify-su-shell.patch
-Patch3:	    hsqldb-1.8.1.3-java7.patch
-Requires:   servlet25
-Requires(post):   coreutils
-Requires(preun):  coreutils
-Requires(preun): initscripts
-Requires(pre):  shadow-utils
-Requires(post): jpackage-utils
-Requires(postun): jpackage-utils
-BuildRequires:  ant
-BuildRequires:  junit
-BuildRequires:  jpackage-utils >= 0:1.5
-BuildRequires:  servlet25
-Group:      Databases
-BuildArch:  noarch
+Summary:	HyperSQL Database Engine
+Name:		hsqldb
+Epoch:	1
+Version:	1.8.1.3
+Release:	6
+License:	BSD
+Group:		Databases
+Url:		http://hsqldb.sourceforge.net/
+Source0:	http://downloads.sourceforge.net/hsqldb/%{name}_%{cvs_version}.zip
+Source1:	%{name}-1.8.0-standard.cfg
+Source2:	%{name}-1.8.0-standard-server.properties
+Source3:	%{name}-1.8.0-standard-webserver.properties
+Source4:	%{name}-1.8.0-standard-sqltool.rc
+Source5:	http://mirrors.ibiblio.org/pub/mirrors/maven2/%{name}/%{name}/1.8.0.10/%{name}-1.8.0.10.pom
+Patch0:		%{name}-1.8.0-scripts.patch
+Patch1:		hsqldb-tmp.patch
+Patch2:		%{name}-1.8.0-specify-su-shell.patch
+Patch3:		hsqldb-1.8.1.3-java7.patch
+BuildArch:	noarch
+BuildRequires:	ant
+BuildRequires:	junit
+BuildRequires:	jpackage-utils >= 0:1.5
+BuildRequires:	servlet25
+Requires:	servlet25
+Requires(post,preun):	coreutils
+Requires(preun):	initscripts
+Requires(post,postun):	jpackage-utils
+Requires(pre):	shadow-utils
 
 %description
 HSQLdb is a relational database engine written in JavaTM , with a JDBC
@@ -79,24 +77,24 @@ database management system that is completely free under the Modified
 BSD License. Yes, that's right, completely free of cost or restrictions!
 
 %package manual
-Summary:    Manual for %{name}
-Group:      Development/Java
+Summary:	Manual for %{name}
+Group:		Development/Java
 
 %description manual
 Documentation for %{name}.
 
 %package javadoc
-Summary:    Javadoc for %{name}
-Group:      Development/Java
-Requires:   jpackage-utils
+Summary:	Javadoc for %{name}
+Group:		Development/Java
+Requires:	jpackage-utils
 
 %description javadoc
 Javadoc for %{name}.
 
 %package demo
-Summary:    Demo for %{name}
-Group:      Development/Java
-Requires:   %{name} = %{epoch}:%{version}-%{release}
+Summary:	Demo for %{name}
+Group:		Development/Java
+Requires:	%{name} = %{epoch}:%{version}-%{release}
 
 %description demo
 Demonstrations and samples for %{name}.
@@ -134,45 +132,45 @@ popd
 
 %install
 # jar
-install -d -m 755 $RPM_BUILD_ROOT%{_javadir}
-install -m 644 lib/%{name}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}.jar
+install -d -m 755 %{buildroot}%{_javadir}
+install -m 644 lib/%{name}.jar %{buildroot}%{_javadir}/%{name}.jar
 # bin
-install -d -m 755 $RPM_BUILD_ROOT%{_bindir}
-install -m 755 bin/runUtil.sh $RPM_BUILD_ROOT%{_bindir}/%{name}RunUtil
+install -d -m 755 %{buildroot}%{_bindir}
+install -m 755 bin/runUtil.sh %{buildroot}%{_bindir}/%{name}RunUtil
 # sysv init
-install -d -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
-install -m 755 bin/%{name} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/%{name}
+install -d -m 755 %{buildroot}%{_sysconfdir}/rc.d/init.d
+install -m 755 bin/%{name} %{buildroot}%{_sysconfdir}/rc.d/init.d/%{name}
 # config
-install -d -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
-install -m 644 %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/%{name}
+install -d -m 755 %{buildroot}%{_sysconfdir}/sysconfig
+install -m 644 %{SOURCE1} %{buildroot}%{_sysconfdir}/sysconfig/%{name}
 # serverconfig
-install -d -m 755 $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}
-install -m 644 %{SOURCE2} $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/server.properties
-install -m 644 %{SOURCE3} $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/webserver.properties
-install -m 600 %{SOURCE4} $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/sqltool.rc
+install -d -m 755 %{buildroot}%{_localstatedir}/lib/%{name}
+install -m 644 %{SOURCE2} %{buildroot}%{_localstatedir}/lib/%{name}/server.properties
+install -m 644 %{SOURCE3} %{buildroot}%{_localstatedir}/lib/%{name}/webserver.properties
+install -m 600 %{SOURCE4} %{buildroot}%{_localstatedir}/lib/%{name}/sqltool.rc
 # lib
-install -d -m 755 $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/lib
-install -m 644 lib/functions $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/lib
+install -d -m 755 %{buildroot}%{_localstatedir}/lib/%{name}/lib
+install -m 644 lib/functions %{buildroot}%{_localstatedir}/lib/%{name}/lib
 # data
-install -d -m 755 $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/data
+install -d -m 755 %{buildroot}%{_localstatedir}/lib/%{name}/data
 # demo
-install -d -m 755 $RPM_BUILD_ROOT%{_datadir}/%{name}/demo
-install -m 755 demo/*.sh $RPM_BUILD_ROOT%{_datadir}/%{name}/demo
-install -m 644 demo/*.html $RPM_BUILD_ROOT%{_datadir}/%{name}/demo
+install -d -m 755 %{buildroot}%{_datadir}/%{name}/demo
+install -m 755 demo/*.sh %{buildroot}%{_datadir}/%{name}/demo
+install -m 644 demo/*.html %{buildroot}%{_datadir}/%{name}/demo
 # javadoc
-install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}/%{name}
-cp -r doc/src/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+install -d -m 755 %{buildroot}%{_javadocdir}/%{name}
+cp -r doc/src/* %{buildroot}%{_javadocdir}/%{name}
 rm -rf doc/src
 # manual
-install -d -m 755 $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
-cp -r doc/* $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
-cp index.html $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
+install -d -m 755 %{buildroot}%{_docdir}/%{name}-%{version}
+cp -r doc/* %{buildroot}%{_docdir}/%{name}-%{version}
+cp index.html %{buildroot}%{_docdir}/%{name}-%{version}
 
 # Maven metadata
-install -pD -T -m 644 pom.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP-%{name}.pom
+install -pD -T -m 644 pom.xml %{buildroot}%{_mavenpomdir}/JPP-%{name}.pom
 %add_to_maven_depmap %{name} %{name} %{version} JPP %{name}
 
-pushd $RPM_BUILD_ROOT%{_localstatedir}/lib/%{name}/lib
+pushd %{buildroot}%{_localstatedir}/lib/%{name}/lib
     ln -s $(build-classpath hsqldb) hsqldb.jar
     ln -s $(build-classpath servlet) servlet.jar
 popd
@@ -205,11 +203,10 @@ fi
 rm -rf $(readlink -f %{_javadocdir}/%{name}) %{_javadocdir}/%{name} || :
 
 %files
-%defattr(-,root,root,-)
 %doc doc/hsqldb_lic.txt
 %{_javadir}/*
-%attr(0755,root,root) %{_bindir}/*
-%attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/%{name}
+%{_bindir}/*
+%{_sysconfdir}/rc.d/init.d/%{name}
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
 %attr(0700,hsqldb,hsqldb) %{_localstatedir}/lib/%{name}/data
 %{_localstatedir}/lib/%{name}/lib
@@ -221,215 +218,13 @@ rm -rf $(readlink -f %{_javadocdir}/%{name}) %{_javadocdir}/%{name} || :
 %{_mavenpomdir}/*
 
 %files manual
-%defattr(-,root,root,-)
 %doc %{_docdir}/%{name}-%{version}
 %doc doc/hsqldb_lic.txt
 
 %files javadoc
-%defattr(-,root,root,-)
 %{_javadocdir}/%{name}
 %doc doc/hsqldb_lic.txt
 
 %files demo
-%defattr(-,root,root,-)
 %{_datadir}/%{name}
 
-
-
-%changelog
-* Sun Nov 27 2011 Guilherme Moro <guilherme@mandriva.com> 1:1.8.1.3-5
-+ Revision: 733975
-- rebuild
-- imported package hsqldb
-
-  + Oden Eriksson <oeriksson@mandriva.com>
-    - mass rebuild
-
-* Fri Dec 03 2010 Oden Eriksson <oeriksson@mandriva.com> 1:1.8.0.10-0.0.5mdv2011.0
-+ Revision: 605880
-- rebuild
-
-* Wed Mar 17 2010 Oden Eriksson <oeriksson@mandriva.com> 1:1.8.0.10-0.0.4mdv2010.1
-+ Revision: 522848
-- rebuilt for 2010.1
-
-* Wed Sep 02 2009 Christophe Fergeau <cfergeau@mandriva.com> 1:1.8.0.10-0.0.3mdv2010.0
-+ Revision: 425153
-- rebuild
-
-* Sat Mar 07 2009 Antoine Ginies <aginies@mandriva.com> 1:1.8.0.10-0.0.2mdv2009.1
-+ Revision: 351237
-- rebuild
-
-* Wed Jun 18 2008 Alexander Kurtakov <akurtakov@mandriva.org> 1:1.8.0.10-0.0.1mdv2009.0
-+ Revision: 223788
-- new version 1.8.0.10, use java-rpmbuild, disable gcj_compile
-
-* Fri Feb 15 2008 Anssi Hannula <anssi@mandriva.org> 1:1.8.0.9-0.0.11mdv2008.1
-+ Revision: 169057
-- split server to hsqldb-server subpackage, as OOo needs the classes only
-
-* Mon Jan 14 2008 David Walluck <walluck@mandriva.org> 1:1.8.0.9-0.0.10mdv2008.1
-+ Revision: 151139
-- do not call build-classpath in %%post
-- comment out unused %%preun code
-
-  + Marcelo Ricardo Leitner <mrl@mandriva.com>
-    - Protect java-rpmbuild buildrequires to mdkversion >= 200810, so we can easily
-      backport this package to 2008.0.
-
-* Fri Jan 04 2008 David Walluck <walluck@mandriva.org> 1:1.8.0.9-0.0.9mdv2008.1
-+ Revision: 145272
-- silence commands in %%post
-
-* Fri Jan 04 2008 David Walluck <walluck@mandriva.org> 1:1.8.0.9-0.0.8mdv2008.1
-+ Revision: 144825
-- rebuild
-
-* Thu Jan 03 2008 David Walluck <walluck@mandriva.org> 1:1.8.0.9-0.0.7mdv2008.1
-+ Revision: 143483
-- bump release
-- fix patch name in spec
-- hsqldb user needs a shell or the service can't start
-- patch initscript so that restart works even when no server is currently running
-
-* Thu Jan 03 2008 Anssi Hannula <anssi@mandriva.org> 1:1.8.0.9-0.0.6mdv2008.1
-+ Revision: 142848
-- remove macros from comments causing %%pre errors (Oden)
-
-* Thu Jan 03 2008 David Walluck <walluck@mandriva.org> 1:1.8.0.9-0.0.5mdv2008.1
-+ Revision: 141139
-- spec cleanup
-
-  + Anssi Hannula <anssi@mandriva.org>
-    - fix hsqldb user creation
-
-  + Olivier Blin <blino@mandriva.org>
-    - restore BuildRoot
-
-* Mon Dec 31 2007 David Walluck <walluck@mandriva.org> 1:1.8.0.9-0.0.4mdv2008.1
-+ Revision: 139941
-- fix JAVA_HOME, JAVACMD, and jar locations hsqldb-1.8.0-standard.cfg
-- build with GCJ (1.5.0) for now due to JDBC API changes in 1.7.0
-
-  + Anssi Hannula <anssi@mandriva.org>
-    - post requires jpackage-utils for build-classpath
-    - buildrequire java-rpmbuild, i.e. build with icedtea on x86(_64)
-
-  + Thierry Vignaud <tv@mandriva.org>
-    - kill re-definition of %%buildroot on Pixel's request
-
-* Sun Dec 09 2007 David Walluck <walluck@mandriva.org> 1:1.8.0.9-0.0.1mdv2008.1
-+ Revision: 116615
-- 1.8.0.9
-
-* Sat Sep 15 2007 Anssi Hannula <anssi@mandriva.org> 1:1.8.0.8-1.0.2mdv2008.0
-+ Revision: 87386
-- rebuild to filter out autorequires of GCJ AOT objects
-- remove unnecessary Requires(post) on java-gcj-compat
-
-* Mon Sep 03 2007 David Walluck <walluck@mandriva.org> 1:1.8.0.8-1.0.1mdv2008.0
-+ Revision: 78860
-- 1.8.0.8
-
-* Tue Apr 17 2007 David Walluck <walluck@mandriva.org> 1:1.8.0.7-2.1mdv2008.0
-+ Revision: 14164
-- Import hsqldb
-
-
-
-* Thu Feb 02 2007 David Walluck <walluck@mandriva.org> 1:1.8.0.7-2.1mdv2007.1
-- release
-
-* Mon Jan 22 2007 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.7-2jpp
-- Update copyright date
-
-* Thu Jan 11 2007 Deepak Bhole <dbhole@redhat.com> 1.8.0.7-1jpp
-- Updgrade to 1.8.0.7
-
-* Wed Nov 29 2006 Deepak Bhole <dbhole@redhat.com> 1.8.0.4-4jpp
-- Added missing entries to the files section
-- From fnasser@redhat.com:
-  - Add post requires for servletapi5 to ensure installation order
-- From sgrubb@redhat.com:
-  - Apply patch correcting tmp file usage
-
-* Mon Aug 21 2006 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.4-3jpp
-- Add missing postun section.
-
-* Fri Aug 04 2006 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.4-2jpp
-- Add missing requirements.
-- Merge with fc spec.
-  - From gbenson@redhat.com:
-    - Change /etc/init.d to /etc/rc.d/init.d.
-    - Create hsqldb user and group with low IDs (RH bz #165670).
-    - Do not remove hsqldb user and group on uninstall.
-    - Build with servletapi5.
-  - From ashah@redhat.com:
-    - Change hsqldb user shell to /sbin/nologin.
-  - From notting@redhat.com
-    - use an assigned user/group id
-
-* Fri Apr 28 2006 Fernando Nasser <fnasser@redhat.com> 1:1.8.0.4-1jpp
-- First JPP 1.7 build
-- Upgrade to 1.8.0.4
-
-* Tue Jul 26 2005 Fernando Nasser <fnasser@redhat.com> 0:1.80.1-1jpp
-- Upgrade to 1.8.0.1
-
-* Mon Mar 07 2005 Fernando Nasser <fnasser@redhat.com> 0:1.73.3-1jpp
-- Upgrade to 1.7.3.3
-
-* Wed Mar 02 2005 Fernando Nasser <fnasser@redhat.com> 0:1.73.0-1jpp
-- Upgrade to 1.7.3.0
-
-* Wed Aug 25 2004 Ralph Apel <r.apel at r-apel.de> 0:1.72.3-2jpp
-- Build with ant-1.6.2
-
-* Mon Aug 16 2004 Ralph Apel <r.apel at r-apel.de> 0:1.72.3-1jpp
-- 1.7.2.3 stable
-
-* Fri Jun 04 2004 Ralph Apel <r.apel at r-apel.de> 0:1.72-0.rc6b.1jpp
-- 1.7.2 preview
-
-* Tue May 06 2003 David Walluck <david@anti-microsoft.org> 0:1.71-1jpp
-- 1.71
-- update for JPackage 1.5
-
-* Mon Mar 18 2002 Guillaume Rousse <guillomovitch@users.sourceforge.net> 1.61-6jpp 
-- generic servlet support
-
-* Mon Jan 21 2002 Guillaume Rousse <guillomovitch@users.sourceforge.net> 1.61-5jpp 
-- versioned dir for javadoc
-- no dependencies for javadoc package
-- stricter dependencies for demo package
-- section macro
-- adaptation to new servlet3 package
-
-* Mon Dec 17 2001 Guillaume Rousse <guillomovitch@users.sourceforge.net> 1.61-4jpp
-- javadoc in javadoc package
-- doc reorganisation
-- removed Requires: ant
-- patches regenerated and bzipped
-
-* Wed Nov 21 2001 Christian Zoffoli <czoffoli@littlepenguin.org> 1.61-3jpp
-- removed packager tag
-- new jpp extension
-
-* Fri Nov 09 2001 Christian Zoffoli <czoffoli@littlepenguin.org> 1.61-2jpp
-- added BuildRequires:        servletapi3 ant
-- added Requires:        servletapi3 ant
-
-* Fri Nov 09 2001 Christian Zoffoli <czoffoli@littlepenguin.org> 1.61-1jpp
-- complete spec restyle
-- splitted & improved linuxization patch
-
-* Fri Nov 09 2001 Christian Zoffoli <czoffoli@littlepenguin.org> 1.60-1jpp
-- 1.60 first "official release" of Hsqldb
-
-* Fri Nov 09 2001 Christian Zoffoli <czoffoli@littlepenguin.org> 1.43-2jpp
-- fixed version
-
-* Fri Nov 09 2001 Christian Zoffoli <czoffoli@littlepenguin.org> 1.43-1jpp
-- first release
-- linuxization patch (doc + script)
