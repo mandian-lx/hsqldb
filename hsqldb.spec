@@ -34,7 +34,7 @@ Summary:	HyperSQL Database Engine
 Name:		hsqldb
 Epoch:	1
 Version:	1.8.1.3
-Release:	6
+Release:	7
 License:	BSD
 Group:		Databases
 Url:		http://hsqldb.sourceforge.net/
