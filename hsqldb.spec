@@ -1,3 +1,4 @@
+%{?_javapackages_macros:%_javapackages_macros}
 # Copyright (c) 2000-2007, JPackage Project
 # All rights reserved.
 #
@@ -28,36 +29,52 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-%global cvs_version 1_8_1_3
+%global pomversion 2.3.0
 
-Summary:	HyperSQL Database Engine
-Name:		hsqldb
-Epoch:	1
-Version:	1.8.1.3
-Release:	10
-License:	BSD
-Group:		Databases
-Url:		http://hsqldb.sourceforge.net/
-Source0:	http://downloads.sourceforge.net/hsqldb/%{name}_%{cvs_version}.zip
-Source1:	%{name}-1.8.0-standard.cfg
-Source2:	%{name}-1.8.0-standard-server.properties
-Source3:	%{name}-1.8.0-standard-webserver.properties
-Source4:	%{name}-1.8.0-standard-sqltool.rc
-Source5:	http://mirrors.ibiblio.org/pub/mirrors/maven2/%{name}/%{name}/1.8.0.10/%{name}-1.8.0.10.pom
-Patch0:		%{name}-1.8.0-scripts.patch
-Patch1:		hsqldb-tmp.patch
-Patch2:		%{name}-1.8.0-specify-su-shell.patch
-Patch3:		hsqldb-1.8.1.3-java7.patch
-BuildArch:	noarch
-BuildRequires:	ant
-BuildRequires:	junit
-BuildRequires:	jpackage-utils >= 0:1.5
-BuildRequires:	servlet25
-Requires:	servlet25
-Requires(post,preun):	coreutils
-Requires(preun):	initscripts
-Requires(post,postun):	jpackage-utils
-Requires(pre):	shadow-utils
+Name:           hsqldb
+Version:        2.3.1
+Release:        1.1%{?dist}
+Epoch:          1
+Summary:        HyperSQL Database Engine
+License:        BSD
+URL:            http://hsqldb.sourceforge.net/
+
+
+BuildArch:      noarch
+
+Source0:        http://downloads.sourceforge.net/hsqldb/%{name}-%{version}.zip
+Source1:        %{name}-1.8.0-standard.cfg
+Source2:        %{name}-1.8.0-standard-server.properties
+Source3:        %{name}-1.8.0-standard-webserver.properties
+Source4:        %{name}-1.8.0-standard-sqltool.rc
+Source5:        http://www.hsqldb.org/repos/org/hsqldb/hsqldb/%{pomversion}/hsqldb-%{pomversion}.pom
+# Custom systemd files - talking with upstream about incorporating them, see
+# http://sourceforge.net/projects/hsqldb/forums/forum/73673/topic/5367103
+Source6:        %{name}.systemd
+Source7:        %{name}-wrapper
+Source8:        %{name}-post
+Source9:        %{name}-stop
+
+# Javadoc fails to create since apidocs folder is deleted and not recreated
+Patch0:         %{name}-apidocs.patch
+# Package org.hsqldb.cmdline was only compiled with java 1.5
+Patch1:         %{name}-cmdline.patch
+
+BuildRequires:  ant
+BuildRequires:  jpackage-utils >= 0:1.5
+BuildRequires:  junit
+BuildRequires:  systemd-units
+BuildRequires:  tomcat-servlet-3.0-api
+
+Requires:       java
+Requires:       tomcat-servlet-3.0-api
+Requires(pre):  shadow-utils
+Requires(post): systemd
+Requires(post): systemd-units
+Requires(preun):  initscripts
+Requires(preun):  systemd-units
+Requires(postun): systemd-units
+
 
 %description
 HSQLdb is a relational database engine written in JavaTM , with a JDBC
@@ -77,33 +94,30 @@ database management system that is completely free under the Modified
 BSD License. Yes, that's right, completely free of cost or restrictions!
 
 %package manual
-Summary:	Manual for %{name}
-Group:		Development/Java
+Summary:    Manual for %{name}
+
 
 %description manual
 Documentation for %{name}.
 
 %package javadoc
-Summary:	Javadoc for %{name}
-Group:		Development/Java
-Requires:	jpackage-utils
+Summary:    Javadoc for %{name}
+
+Requires:   jpackage-utils
 
 %description javadoc
 Javadoc for %{name}.
 
 %package demo
-Summary:	Demo for %{name}
-Group:		Development/Java
-Requires:	%{name} = %{epoch}:%{version}-%{release}
+Summary:    Demo for %{name}
+
+Requires:   %{name} = %{epoch}:%{version}-%{release}
 
 %description demo
 Demonstrations and samples for %{name}.
 
 %prep
-%setup -T -c -n %{name}
-(cd ..
-unzip -q %{SOURCE0} 
-)
+%setup -q -n %{name}-%{version}/%{name}
 # set right permissions
 find . -name "*.sh" -exec chmod 755 \{\} \;
 # remove all _notes directories
@@ -115,19 +129,19 @@ find . -name "*.war" -exec rm -f {} \;
 # correct silly permissions
 chmod -R go=u-w *
 
-%patch0
-%patch1 -p1
-%patch2
-%patch3 -p1
+# Fix doc location
+sed -i -e 's/doc-src/doc/g' build/build.xml
 
-cp %{SOURCE5} ./pom.xml
+%patch0 -p1
+%patch1 -p1
 
 %build
 export CLASSPATH=$(build-classpath \
 servlet \
 junit)
 pushd build
-ant jar javadoc
+export JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8
+ant hsqldb javadoc
 popd
 
 %install
@@ -136,10 +150,13 @@ install -d -m 755 %{buildroot}%{_javadir}
 install -m 644 lib/%{name}.jar %{buildroot}%{_javadir}/%{name}.jar
 # bin
 install -d -m 755 %{buildroot}%{_bindir}
-install -m 755 bin/runUtil.sh %{buildroot}%{_bindir}/%{name}RunUtil
-# sysv init
-install -d -m 755 %{buildroot}%{_sysconfdir}/rc.d/init.d
-install -m 755 bin/%{name} %{buildroot}%{_sysconfdir}/rc.d/init.d/%{name}
+# systemd
+install -d -m 755 %{buildroot}%{_unitdir}
+install -d -m 755 %{buildroot}%{_prefix}/lib/%{name}
+install -m 644 %{SOURCE6} %{buildroot}%{_unitdir}/%{name}.service
+install -m 755 %{SOURCE7} %{buildroot}%{_prefix}/lib/%{name}/%{name}-wrapper
+install -m 755 %{SOURCE8} %{buildroot}%{_prefix}/lib/%{name}/%{name}-post
+install -m 755 %{SOURCE9} %{buildroot}%{_prefix}/lib/%{name}/%{name}-stop
 # config
 install -d -m 755 %{buildroot}%{_sysconfdir}/sysconfig
 install -m 644 %{SOURCE1} %{buildroot}%{_sysconfdir}/sysconfig/%{name}
@@ -150,36 +167,30 @@ install -m 644 %{SOURCE3} %{buildroot}%{_localstatedir}/lib/%{name}/webserver.pr
 install -m 600 %{SOURCE4} %{buildroot}%{_localstatedir}/lib/%{name}/sqltool.rc
 # lib
 install -d -m 755 %{buildroot}%{_localstatedir}/lib/%{name}/lib
-install -m 644 lib/functions %{buildroot}%{_localstatedir}/lib/%{name}/lib
-# data
-install -d -m 755 %{buildroot}%{_localstatedir}/lib/%{name}/data
-# demo
-install -d -m 755 %{buildroot}%{_datadir}/%{name}/demo
-install -m 755 demo/*.sh %{buildroot}%{_datadir}/%{name}/demo
-install -m 644 demo/*.html %{buildroot}%{_datadir}/%{name}/demo
 # javadoc
 install -d -m 755 %{buildroot}%{_javadocdir}/%{name}
-cp -r doc/src/* %{buildroot}%{_javadocdir}/%{name}
-rm -rf doc/src
+cp -r doc/apidocs/* %{buildroot}%{_javadocdir}/%{name}
+# data
+install -d -m 755 %{buildroot}%{_localstatedir}/lib/%{name}/data
 # manual
 install -d -m 755 %{buildroot}%{_docdir}/%{name}-%{version}
 cp -r doc/* %{buildroot}%{_docdir}/%{name}-%{version}
 cp index.html %{buildroot}%{_docdir}/%{name}-%{version}
 
+cd ..
 # Maven metadata
-install -pD -T -m 644 pom.xml %{buildroot}%{_mavenpomdir}/JPP-%{name}.pom
-%add_to_maven_depmap %{name} %{name} %{version} JPP %{name}
+install -pD -T -m 644 %{SOURCE5} %{buildroot}%{_mavenpomdir}/JPP-%{name}.pom
+%add_maven_depmap
 
 pushd %{buildroot}%{_localstatedir}/lib/%{name}/lib
-    ln -s $(build-classpath hsqldb) hsqldb.jar
+    # build-classpath can not be used as the jar is not
+    # yet present during the build
+    ln -s %{_javadir}/hsqldb.jar hsqldb.jar
     ln -s $(build-classpath servlet) servlet.jar
 popd
 
 %preun
-if [ $1 = 0 ] ; then
-    /sbin/service %{name} stop >/dev/null 2>&1
-    /sbin/chkconfig --del %{name}
-fi
+%systemd_preun hsqldb.service
 
 %pre
 # Add the "hsqldb" user and group
@@ -189,25 +200,32 @@ fi
     -d %{_localstatedir}/lib/%{name} -r %{name} 2> /dev/null || :
 
 %post
-# This adds the proper /etc/rc*.d links for the script
-/sbin/chkconfig --add %{name}
-
-%update_maven_depmap
+%systemd_post hsqldb.service
 
 %postun
-%update_maven_depmap
+%systemd_postun_with_restart hsqldb.service
 
-%pre javadoc
-# workaround for rpm bug, can be removed in F-17
-[ $1 -gt 1 ] && [ -L %{_javadocdir}/%{name} ] && \
-rm -rf $(readlink -f %{_javadocdir}/%{name}) %{_javadocdir}/%{name} || :
+%triggerun -- hsqldb < 1.8.1.3-9
+# Save the current service runlevel info
+# User must manually run systemd-sysv-convert --apply httpd
+# to migrate them to systemd targets
+/usr/bin/systemd-sysv-convert --save hsqldb >/dev/null 2>&1 ||:
+
+# If the package is allowed to autostart:
+/bin/systemctl --no-reload enable hsqldb.service >/dev/null 2>&1 ||:
+
+# Run these because the SysV package being removed won't do them
+/sbin/chkconfig --del hsqldb >/dev/null 2>&1 || :
+/bin/systemctl try-restart hsqldb.service >/dev/null 2>&1 || :
 
 %files
-%doc doc/hsqldb_lic.txt
+%defattr(-,root,root,-)
 %{_javadir}/*
-%{_bindir}/*
-%{_sysconfdir}/rc.d/init.d/%{name}
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
+%{_unitdir}/%{name}.service
+%{_prefix}/lib/%{name}/%{name}-wrapper
+%{_prefix}/lib/%{name}/%{name}-post
+%{_prefix}/lib/%{name}/%{name}-stop
 %attr(0700,hsqldb,hsqldb) %{_localstatedir}/lib/%{name}/data
 %{_localstatedir}/lib/%{name}/lib
 %{_localstatedir}/lib/%{name}/server.properties
@@ -219,12 +237,219 @@ rm -rf $(readlink -f %{_javadocdir}/%{name}) %{_javadocdir}/%{name} || :
 
 %files manual
 %doc %{_docdir}/%{name}-%{version}
-%doc doc/hsqldb_lic.txt
 
 %files javadoc
-%{_javadocdir}/%{name}
-%doc doc/hsqldb_lic.txt
+%doc %{_javadocdir}/%{name}
 
 %files demo
-%{_datadir}/%{name}
 
+%changelog
+* Thu Oct 17 2013 Tomas Radej <tradej@redhat.com> - 1:2.3.1-1
+- Updated to latest upstream version
+
+* Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:2.2.9-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
+
+* Wed May 22 2013 Tomas Radej <tradej@redhat.com> - 1:2.2.9-1
+- Updated to latest upstream version
+- Default DB URL is now hardcoded in hsqldb-post and hsqldb-stop as java
+  arguments (upstream stopped reading them from config file)
+- Systemd now ignores exit code of hsqldb-wrapper (bz #966056)
+
+* Fri May 17 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:1.8.1.3-11
+- Fix incorrect permissions on systemd unit file
+- Resolves: rhbz#963911
+
+* Thu Feb 14 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:1.8.1.3-10
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
+
+* Fri Aug 24 2012 Tomas Radej <tradej@redhat.com> - 1:1.8.1.3-9
+- Switched from SysV to systemd
+- Spec rearrangements
+
+* Thu Jul 19 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:1.8.1.3-8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
+
+* Fri Apr 6 2012 Alexander Kurtakov <akurtako@redhat.com> 1:1.8.1.3-7
+- Switch to servlet 3.0 by default.
+
+* Thu Mar 08 2012 Tomas Radej <tradej@redhat.com> - 1:1.8.1.3-6
+- Fixed symlink
+
+* Tue Jan 24 2012 Deepak Bhole <dbhole@redhat.com> - 1:1.8.1.3-5
+- Added patch to support JDBC 4.1/Java 7
+
+* Fri Jan 13 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:1.8.1.3-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
+* Wed Feb 09 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:1.8.1.3-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
+* Tue Jan 25 2011 Alexander Kurtakov <akurtako@redhat.com> 1:1.8.1.3-2
+- More merge review fixes.
+
+* Mon Jan 24 2011 Alexander Kurtakov <akurtako@redhat.com> 1:1.8.1.3-1
+- Update to new upstream version.
+- Fixes for the merge review.
+
+* Wed Oct 6 2010 Alexander Kurtakov <akurtako@redhat.com> 1:1.8.0.10-6
+- Update to use tomcat6 servlet implementation.
+
+* Mon Jan 11 2010 Mary Ellen Foster <mefoster at gmail.com> - 1.8.0.10-5
+- Add maven2 pom and metadata
+
+* Thu Oct 22 2009 Jesse Keating <jkeating@redhat.com> - 1.8.0.10-4
+- Add patches from Caolan for #523110 and #517839
+
+* Fri Jul 24 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:1.8.0.10-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
+
+* Tue Feb 24 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:1.8.0.10-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_11_Mass_Rebuild
+
+* Thu Jul 10 2008 Jon Prindiville <jprindiv@redhat.com> - 1:1.8.0.10-1
+- Upgrade to 1.8.0.10
+
+* Wed Jul  9 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 1:1.8.0.9-3
+- drop repotag
+
+* Thu May 29 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 1:1.8.0.9-2jpp.2
+- fix license tag
+
+* Mon Feb 18 2008 Fedora Release Engineering <rel-eng@fedoraproject.org> - 1:1.8.0.9-2jpp.1
+- Autorebuild for GCC 4.3
+
+* Tue Jan 22 2008 Jon Prindiville <jprindiv@redhat.com> 1.8.0.9-1jpp.1
+- Fix for bz# 428520: Defining JAVA_HOME in /etc/sysconfig/hsqldb
+
+* Thu Jan 17 2008 Jon Prindiville <jprindiv@redhat.com> 1.8.0.9-1jpp
+- Upgrade to 1.8.0.9
+
+* Tue Dec 04 2007 Jon Prindiville <jprindiv@redhat.com> 1.8.0.8-1jpp.5
+- Backport patch, addressing CVE-2007-4576
+
+* Tue Oct 16 2007 Deepak Bhole <dbhole@redhat.com> 1.8.0.8-1jpp.4
+- Rebuild
+
+* Tue Oct 16 2007 Deepak Bhole <dbhole@redhat.com> 1.8.0.8-1jpp.3
+- Fix bz# 218135: Init script now specifies shell when starting service
+
+* Thu Sep 20 2007 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.8-1jpp.2
+- Added %%{?dist} to release, as per Fedora policy
+
+* Fri Aug 31 2007 Fernando Nasser <fnasser@redhat.com> 1:1.8.0.8-1jpp.1
+- Merge with upstream
+
+* Fri Aug 31 2007 Fernando Nasser <fnasser@redhat.com> 1:1.8.0.8-1jpp
+- Upgrade to 1.8.0.8
+
+* Mon Jan 22 2007 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.7-2jpp
+- Update copyright date
+
+* Thu Jan 22 2007 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.7-1jpp.2
+- Bump release to build in rawhide
+
+* Thu Jan 11 2007 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.7-1jpp
+- Updgrade to 1.8.0.7
+
+* Thu Nov 30 2006 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.4-4jpp.2
+- Bump release to build in rawhide
+
+* Wed Nov 29 2006 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.4-4jpp
+- Added missing entries to the files section
+- From fnasser@redhat.com:
+  - Add post requires for servletapi5 to ensure installation order
+- From sgrubb@redhat.com:
+  - Apply patch correcting tmp file usage
+
+* Wed Oct 11 2006 Fernando Nasser <fnasser@redhat.com> 1:1.8.0.4-3jpp.4
+- Add post requires for servletapi5 to ensure installation order
+
+* Sun Oct 01 2006 Jesse Keating <jkeating@redhat.com> 1:1.8.0.4-3jpp.3
+- rebuilt for unwind info generation, broken in gcc-4.1.1-21
+
+* Wed Sep 20 2006 Steve Grubb <sgrubb@redhat.com> 1:1.8.0.4-3jpp.2
+- Apply patch correcting tmp file usage
+
+* Mon Aug 21 2006 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.4-3jpp
+- Add missing postun section.
+
+* Tue Aug 08 2006 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.4-2jpp.2
+- Fix regression re: missing shadow-utils prereq.
+
+* Fri Aug 04 2006 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.4-2jpp
+- Add missing requirements.
+- Merge with fc spec.
+  - From gbenson@redhat.com:
+    - Change /etc/init.d to /etc/rc.d/init.d.
+    - Create hsqldb user and group with low IDs (RH bz #165670).
+    - Do not remove hsqldb user and group on uninstall.
+    - Build with servletapi5.
+  - From ashah@redhat.com:
+    - Change hsqldb user shell to /sbin/nologin.
+  - From notting@redhat.com
+    - use an assigned user/group id
+
+* Fri Apr 28 2006 Fernando Nasser <fnasser@redhat.com> 1:1.8.0.4-1jpp
+- First JPP 1.7 build
+- Upgrade to 1.8.0.4
+
+* Tue Jul 26 2005 Fernando Nasser <fnasser@redhat.com> 0:1.80.1-1jpp
+- Upgrade to 1.8.0.1
+
+* Mon Mar 07 2005 Fernando Nasser <fnasser@redhat.com> 0:1.73.3-1jpp
+- Upgrade to 1.7.3.3
+
+* Wed Mar 02 2005 Fernando Nasser <fnasser@redhat.com> 0:1.73.0-1jpp
+- Upgrade to 1.7.3.0
+
+* Wed Aug 25 2004 Ralph Apel <r.apel at r-apel.de> 0:1.72.3-2jpp
+- Build with ant-1.6.2
+
+* Mon Aug 16 2004 Ralph Apel <r.apel at r-apel.de> 0:1.72.3-1jpp
+- 1.7.2.3 stable
+
+* Fri Jun 04 2004 Ralph Apel <r.apel at r-apel.de> 0:1.72-0.rc6b.1jpp
+- 1.7.2 preview
+
+* Tue May 06 2003 David Walluck <david@anti-microsoft.org> 0:1.71-1jpp
+- 1.71
+- update for JPackage 1.5
+
+* Mon Mar 18 2002 Guillaume Rousse <guillomovitch@users.sourceforge.net> 1.61-6jpp
+- generic servlet support
+
+* Mon Jan 21 2002 Guillaume Rousse <guillomovitch@users.sourceforge.net> 1.61-5jpp
+- versioned dir for javadoc
+- no dependencies for javadoc package
+- stricter dependencies for demo package
+- section macro
+- adaptation to new servlet3 package
+
+* Mon Dec 17 2001 Guillaume Rousse <guillomovitch@users.sourceforge.net> 1.61-4jpp
+- javadoc in javadoc package
+- doc reorganisation
+- removed Requires: ant
+- patches regenerated and bzipped
+
+* Wed Nov 21 2001 Christian Zoffoli <czoffoli@littlepenguin.org> 1.61-3jpp
+- removed packager tag
+- new jpp extension
+
+* Fri Nov 09 2001 Christian Zoffoli <czoffoli@littlepenguin.org> 1.61-2jpp
+- added BuildRequires: servletapi3 ant
+- added Requires:      servletapi3 ant
+
+* Fri Nov 09 2001 Christian Zoffoli <czoffoli@littlepenguin.org> 1.61-1jpp
+- complete spec restyle
+- splitted & improved linuxization patch
+
+* Fri Nov 09 2001 Christian Zoffoli <czoffoli@littlepenguin.org> 1.60-1jpp
+- 1.60 first "official release" of Hsqldb
+
+* Fri Nov 09 2001 Christian Zoffoli <czoffoli@littlepenguin.org> 1.43-2jpp
+- fixed version
+
+* Fri Nov 09 2001 Christian Zoffoli <czoffoli@littlepenguin.org> 1.43-1jpp
+- first release
+- linuxization patch (doc + script)
