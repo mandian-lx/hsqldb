@@ -1,0 +1,12 @@
+diff --git a/build/build.xml b/build/build.xml
+index 3a2b77f..c18fda0 100644
+--- a/build/build.xml
++++ b/build/build.xml
+@@ -130,6 +130,7 @@ examples:
+           There is no performance penalty, since the javadoc task regenerates
+           everything each run.
+       -->
++     <mkdir dir="doc/apidocs"/>
+      <copy todir="doc/apidocs">
+        <!-- IMPORTANT:
+             Add a fixcrlf if we add non-binary files to doc/apidocs. -->
