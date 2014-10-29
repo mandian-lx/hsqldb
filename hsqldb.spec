@@ -32,7 +32,7 @@
 %global pomversion 2.3.0
 
 Name:           hsqldb
-Version:        2.3.1
+Version:        2.3.2
 Release:        1.1%{?dist}
 Epoch:          1
 Summary:        HyperSQL Database Engine
