@@ -1,44 +1,15 @@
 %{?_javapackages_macros:%_javapackages_macros}
-# Copyright (c) 2000-2007, JPackage Project
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the
-#    distribution.
-# 3. Neither the name of the JPackage Project nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-
+%global _pkgdocdir %{_docdir}/%{name}-%{version}
 %global pomversion 2.3.0
 
 Name:           hsqldb
 Version:        2.3.2
-Release:        1.1%{?dist}
+Release:        1.2
 Epoch:          1
 Summary:        HyperSQL Database Engine
 License:        BSD
 URL:            http://hsqldb.sourceforge.net/
-
+Group:          Databases
 
 BuildArch:      noarch
 
@@ -66,12 +37,9 @@ BuildRequires:  junit
 BuildRequires:  systemd-units
 BuildRequires:  tomcat-servlet-3.0-api
 
-Requires:       java
-Requires:       tomcat-servlet-3.0-api
+Requires:       %{name}-lib = %{epoch}:%{version}-%{release}
 Requires(pre):  shadow-utils
-Requires(post): systemd
 Requires(post): systemd-units
-Requires(preun):  initscripts
 Requires(preun):  systemd-units
 Requires(postun): systemd-units
 
@@ -93,16 +61,23 @@ memory and its speed. Yet it is a completely functional relational
 database management system that is completely free under the Modified
 BSD License. Yes, that's right, completely free of cost or restrictions!
 
+%package lib
+Summary:    HyperSQL Database Engine library
+Group:      Documentation
+
+%description lib
+Library part of %{name}.
+
 %package manual
 Summary:    Manual for %{name}
-
+Group:      Documentation
 
 %description manual
 Documentation for %{name}.
 
 %package javadoc
 Summary:    Javadoc for %{name}
-
+Group:      Documentation
 Requires:   jpackage-utils
 
 %description javadoc
@@ -110,7 +85,7 @@ Javadoc for %{name}.
 
 %package demo
 Summary:    Demo for %{name}
-
+Group:      Development/Tools
 Requires:   %{name} = %{epoch}:%{version}-%{release}
 
 %description demo
@@ -131,6 +106,7 @@ chmod -R go=u-w *
 
 # Fix doc location
 sed -i -e 's/doc-src/doc/g' build/build.xml
+sed -i -e 's|doc/apidocs|%{_javadocdir}/%{name}|g' index.html
 
 %patch0 -p1
 %patch1 -p1
@@ -168,16 +144,14 @@ install -m 600 %{SOURCE4} %{buildroot}%{_localstatedir}/lib/%{name}/sqltool.rc
 # lib
 install -d -m 755 %{buildroot}%{_localstatedir}/lib/%{name}/lib
 # javadoc
-install -d -m 755 %{buildroot}%{_javadocdir}/%{name}
-cp -r doc/apidocs/* %{buildroot}%{_javadocdir}/%{name}
+install -d -m 755 %{buildroot}%{_javadocdir}
+mv doc/apidocs %{buildroot}%{_javadocdir}/%{name}
 # data
 install -d -m 755 %{buildroot}%{_localstatedir}/lib/%{name}/data
 # manual
-install -d -m 755 %{buildroot}%{_docdir}/%{name}-%{version}
-cp -r doc/* %{buildroot}%{_docdir}/%{name}-%{version}
-cp index.html %{buildroot}%{_docdir}/%{name}-%{version}
+install -d -m 755 %{buildroot}%{_pkgdocdir}
+cp -r doc index.html %{buildroot}%{_pkgdocdir}
 
-cd ..
 # Maven metadata
 install -pD -T -m 644 %{SOURCE5} %{buildroot}%{_mavenpomdir}/JPP-%{name}.pom
 %add_maven_depmap
@@ -219,8 +193,6 @@ popd
 /bin/systemctl try-restart hsqldb.service >/dev/null 2>&1 || :
 
 %files
-%defattr(-,root,root,-)
-%{_javadir}/*
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
 %{_unitdir}/%{name}.service
 %{_prefix}/lib/%{name}/%{name}-wrapper
@@ -232,11 +204,11 @@ popd
 %{_localstatedir}/lib/%{name}/webserver.properties
 %attr(0600,hsqldb,hsqldb) %{_localstatedir}/lib/%{name}/sqltool.rc
 %dir %{_localstatedir}/lib/%{name}
-%{_mavendepmapfragdir}/*
-%{_mavenpomdir}/*
+
+%files lib -f .mfiles
 
 %files manual
-%doc %{_docdir}/%{name}-%{version}
+%doc %{_pkgdocdir}
 
 %files javadoc
 %doc %{_javadocdir}/%{name}
@@ -244,6 +216,34 @@ popd
 %files demo
 
 %changelog
+* Thu Sep  4 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.2-1
+- Update to upstream version 2.3.2
+
+* Thu Sep  4 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.1-8
+- Split library into separate subpackage
+- Resolves: rhbz#1025821
+
+* Mon Jul 21 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.1-7
+- Fix javadoc generation
+
+* Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:2.3.1-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
+
+* Thu May 29 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.1-5
+- Use .mfiles generated during build
+
+* Mon Mar 10 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.1-4
+- Remove unneeded requires on systemd-sysv and initscripts
+
+* Tue Mar 04 2014 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1:2.3.1-3
+- Use Requires: java-headless rebuild (#1067528)
+
+* Fri Dec  6 2013 Ville Skyttä <ville.skytta@iki.fi> - 1:2.3.1-2
+- Doc path fixes (#993841).
+- Do not include API docs in -manual.
+- Fix bogus date in %%changelog.
+- Resolves: rhbz#1025821
+
 * Thu Oct 17 2013 Tomas Radej <tradej@redhat.com> - 1:2.3.1-1
 - Updated to latest upstream version
 
@@ -346,7 +346,7 @@ popd
 * Mon Jan 22 2007 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.7-2jpp
 - Update copyright date
 
-* Thu Jan 22 2007 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.7-1jpp.2
+* Mon Jan 22 2007 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.7-1jpp.2
 - Bump release to build in rawhide
 
 * Thu Jan 11 2007 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.7-1jpp
@@ -453,3 +453,4 @@ popd
 * Fri Nov 09 2001 Christian Zoffoli <czoffoli@littlepenguin.org> 1.43-1jpp
 - first release
 - linuxization patch (doc + script)
+
