@@ -3,13 +3,12 @@
 %global pomversion 2.3.0
 
 Name:           hsqldb
-Version:        2.3.2
-Release:        1.3
+Version:        2.3.4
+Release:        1
 Epoch:          1
 Summary:        HyperSQL Database Engine
 License:        BSD
-URL:            http://hsqldb.sourceforge.net/
-Group:          Databases
+URL:            http://hsqldb.org
 
 BuildArch:      noarch
 
@@ -32,12 +31,12 @@ Patch0:         %{name}-apidocs.patch
 Patch1:         %{name}-cmdline.patch
 
 BuildRequires:  ant
-BuildRequires:  jpackage-utils >= 0:1.5
-BuildRequires:  junit
+BuildRequires:  javapackages-local
 BuildRequires:  systemd-units
-BuildRequires:  tomcat-servlet-3.0-api
+BuildRequires:  glassfish-servlet-api
 
 Requires:       %{name}-lib = %{epoch}:%{version}-%{release}
+Requires:       glassfish-servlet-api
 Requires(pre):  shadow-utils
 Requires(post): systemd-units
 Requires(preun):  systemd-units
@@ -63,29 +62,24 @@ BSD License. Yes, that's right, completely free of cost or restrictions!
 
 %package lib
 Summary:    HyperSQL Database Engine library
-Group:      Documentation
 
 %description lib
 Library part of %{name}.
 
 %package manual
 Summary:    Manual for %{name}
-Group:      Documentation
 
 %description manual
 Documentation for %{name}.
 
 %package javadoc
 Summary:    Javadoc for %{name}
-Group:      Documentation
-Requires:   jpackage-utils
 
 %description javadoc
 Javadoc for %{name}.
 
 %package demo
 Summary:    Demo for %{name}
-Group:      Development/Tools
 Requires:   %{name} = %{epoch}:%{version}-%{release}
 
 %description demo
@@ -93,14 +87,19 @@ Demonstrations and samples for %{name}.
 
 %prep
 %setup -q -n %{name}-%{version}/%{name}
+
 # set right permissions
 find . -name "*.sh" -exec chmod 755 \{\} \;
+
 # remove all _notes directories
 for dir in `find . -name _notes`; do rm -rf $dir; done
+
 # remove all binary libs
 find . -name "*.jar" -exec rm -f {} \;
 find . -name "*.class" -exec rm -f {} \;
 find . -name "*.war" -exec rm -f {} \;
+find . -name "*.zip" -exec rm -f {} \;
+
 # correct silly permissions
 chmod -R go=u-w *
 
@@ -112,12 +111,9 @@ sed -i -e 's|doc/apidocs|%{_javadocdir}/%{name}|g' index.html
 %patch1 -p1
 
 %build
-export CLASSPATH=$(build-classpath \
-servlet \
-junit)
 pushd build
 export JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8
-ant hsqldb javadoc
+ant hsqldb javadoc -Dservletapi.lib=$(build-classpath glassfish-servlet-api)
 popd
 
 %install
@@ -160,7 +156,7 @@ pushd %{buildroot}%{_localstatedir}/lib/%{name}/lib
     # build-classpath can not be used as the jar is not
     # yet present during the build
     ln -s %{_javadir}/hsqldb.jar hsqldb.jar
-    ln -s $(build-classpath servlet) servlet.jar
+    ln -s $(build-classpath glassfish-servlet-api) servlet.jar
 popd
 
 %preun
@@ -204,6 +200,7 @@ popd
 %{_localstatedir}/lib/%{name}/webserver.properties
 %attr(0600,hsqldb,hsqldb) %{_localstatedir}/lib/%{name}/sqltool.rc
 %dir %{_localstatedir}/lib/%{name}
+%dir %{_prefix}/lib/%{name}
 
 %files lib -f .mfiles
 
@@ -216,6 +213,39 @@ popd
 %files demo
 
 %changelog
+* Fri Feb 10 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1:2.3.4-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
+
+* Wed Dec 07 2016 Michael Simacek <msimacek@redhat.com> - 1:2.3.4-2
+- Fix broken link to servlet.jar (Resolves rhbz#1400405)
+- Remove bundled servlet api
+
+* Wed Jun 01 2016 Michael Simacek <msimacek@redhat.com> - 1:2.3.4-1
+- Update to upstream version 2.3.4
+
+* Wed Feb 03 2016 Fedora Release Engineering <releng@fedoraproject.org> - 1:2.3.3-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
+
+* Fri Jan 29 2016 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.3-3
+- Fix ownership of %{_prefix}/lib/%{name}
+- Resolves: rhbz#1303104
+
+* Thu Oct  8 2015 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.3-2
+- Add After=network.target to systemd service
+- Resolves: rhbz#1269717
+
+* Thu Jul 23 2015 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.3-1
+- Add BR on javapackages-local
+
+* Tue Jun 30 2015 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.3-1
+- Update to upstream version 2.3.3
+
+* Wed Jun 17 2015 Mat Booth <mat.booth@redhat.com> - 1:2.3.2-3
+- Fix FTBFS by disabling java 8 doclint and building against glassfish-servlet-api
+
+* Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:2.3.2-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+
 * Thu Sep  4 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.2-1
 - Update to upstream version 2.3.2
 
