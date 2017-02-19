@@ -1,6 +1,6 @@
 %{?_javapackages_macros:%_javapackages_macros}
 %global _pkgdocdir %{_docdir}/%{name}-%{version}
-%global pomversion 2.3.0
+%global pomversion 2.3.4
 
 Name:           hsqldb
 Version:        2.3.4
@@ -29,6 +29,8 @@ Source9:        %{name}-stop
 Patch0:         %{name}-apidocs.patch
 # Package org.hsqldb.cmdline was only compiled with java 1.5
 Patch1:         %{name}-cmdline.patch
+# Osgi-compilant manifest
+Patch2:         %{name}-2.3.4-osgi.patch
 
 BuildRequires:  ant
 BuildRequires:  javapackages-local

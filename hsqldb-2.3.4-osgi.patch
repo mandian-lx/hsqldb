@@ -1,0 +1,56 @@
+--- hsqldb-2.3.4/hsqldb/build/build.xml.orig
++++ hsqldb-2.3.4/hsqldb/build/build.xml
+@@ -1275,6 +1275,10 @@
+ 
+   <target name="osgi" depends="-ivy-setup, hsqldb"
+     description="Generates 'hsqldb-osgi.jar' file with OSGI properties in manifest">
++    <path id="bnd-jar.cpref">
++         <pathelement location="/usr/share/java/aqute-bnd.jar"/>
++         <!--pathelement location="/usr/share/java/aqute-bndlib.jar"/-->
++    </path>
+     <pathconvert property="bndjar.file" refid="bnd-jar.cpref"/>
+     <!-- Purposefully not using the bndwrap task available for this purpose,
+          because the docs don't explain how to use the attributes clearly enough
+@@ -1287,7 +1291,7 @@
+       <sysproperty key="hsqldb.title" value="${hsqldb.title}"/>
+       <arg value="wrap"/>
+       <arg value="-output"/>
+-      <arg value="hsqldb-osgi.jar"/>
++      <arg value="hsqldb.jar"/>
+       <arg value="-properties"/>
+       <arg file="build/hsqldb.bnd"/>
+       <arg value="hsqldb.jar"/>
+--- hsqldb-2.3.4/hsqldb/build/antivy-setup.xml.orig
++++ hsqldb-2.3.4/hsqldb/build/antivy-setup.xml
+@@ -7,9 +7,27 @@
+   <target name="ivy-setup" depends="-ivy-setup"/>
+ 
+   <target name="-ivy-setup" unless="-ivy.is.setup">
+-    <fail>An Ant target that you have invoked, directly or indirectly, has been changed
+-to reply upon Gradle.
+-Please rerun your Ant command as a Gradle command, using 'gradlew' in place of
+-'ant'.</fail>
++    <fail message="Ant property 'bnd.jarpath' required by target 'bnd'"
++           unless="bnd.jarpath"/>
++    <copy overwrite="true" failonerror="false"
++           file="lib/hsqldb.jar" tofile="lib/hsqldb.prebnd"/>
++    <available property="injar.present" type="file" file="lib/hsqldb.prebnd"/>
++    <fail message="Can't use target 'bnd' if 'hsqldb.jar' file not build yet"
++           unless="injar.present"/>
++    <!-- Purposefully not using the bndwrap task available for this purpose,
++         because the docs don't explain how to use the attributes clearly enough
++         to figure out how to use it. -->
++    <java failonerror="true" jar="${bnd.jarpath}" fork="true" dir="lib">
++      <sysproperty key="hsqldb.version" value="${hsqldb.version}"/>
++      <sysproperty key="build.vendor" value="${user.name}"/>
++      <sysproperty key="hsqldb.title" value="${hsqldb.title}"/>
++      <arg value="wrap"/>
++      <arg value="-output"/>
++      <arg value="hsqldb.jar"/>
++      <arg value="-properties"/>
++      <arg file="build/hsqldb.bnd"/>
++      <arg value="hsqldb.prebnd"/>
++    </java>
++    <delete file="lib/hsqldb.prebnd"/>
+   </target>
+ </project>
