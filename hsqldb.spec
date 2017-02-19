@@ -111,11 +111,12 @@ sed -i -e 's|doc/apidocs|%{_javadocdir}/%{name}|g' index.html
 
 %patch0 -p1
 %patch1 -p1
+%patch2 -p2 -b .orig
 
 %build
 pushd build
 export JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8
-ant hsqldb javadoc -Dservletapi.lib=$(build-classpath glassfish-servlet-api)
+%ant hsqldb osgi javadoc -Dservletapi.lib=$(build-classpath glassfish-servlet-api) -Dbnd.jarpath=$(build-classpath aqute-bnd)
 popd
 
 %install
