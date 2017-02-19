@@ -36,6 +36,7 @@ BuildRequires:  ant
 BuildRequires:  javapackages-local
 BuildRequires:  systemd-units
 BuildRequires:  glassfish-servlet-api
+BuildRequires:  aqute-bnd
 
 Requires:       %{name}-lib = %{epoch}:%{version}-%{release}
 Requires:       glassfish-servlet-api
