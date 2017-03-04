@@ -1,44 +1,14 @@
 %{?_javapackages_macros:%_javapackages_macros}
-# Copyright (c) 2000-2007, JPackage Project
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the
-#    distribution.
-# 3. Neither the name of the JPackage Project nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-
-%global pomversion 2.3.0
+%global _pkgdocdir %{_docdir}/%{name}-%{version}
+%global pomversion 2.3.4
 
 Name:           hsqldb
-Version:        2.3.1
-Release:        1.1%{?dist}
+Version:        2.3.4
+Release:        1
 Epoch:          1
 Summary:        HyperSQL Database Engine
 License:        BSD
-URL:            http://hsqldb.sourceforge.net/
-
+URL:            http://hsqldb.org
 
 BuildArch:      noarch
 
@@ -59,19 +29,19 @@ Source9:        %{name}-stop
 Patch0:         %{name}-apidocs.patch
 # Package org.hsqldb.cmdline was only compiled with java 1.5
 Patch1:         %{name}-cmdline.patch
+# Osgi-compilant manifest
+Patch2:         %{name}-2.3.4-osgi.patch
 
 BuildRequires:  ant
-BuildRequires:  jpackage-utils >= 0:1.5
-BuildRequires:  junit
+BuildRequires:  javapackages-local
 BuildRequires:  systemd-units
-BuildRequires:  tomcat-servlet-3.0-api
+BuildRequires:  glassfish-servlet-api
+BuildRequires:  aqute-bnd
 
-Requires:       java
-Requires:       tomcat-servlet-3.0-api
+Requires:       %{name}-lib = %{epoch}:%{version}-%{release}
+Requires:       glassfish-servlet-api
 Requires(pre):  shadow-utils
-Requires(post): systemd
 Requires(post): systemd-units
-Requires(preun):  initscripts
 Requires(preun):  systemd-units
 Requires(postun): systemd-units
 
@@ -93,9 +63,14 @@ memory and its speed. Yet it is a completely functional relational
 database management system that is completely free under the Modified
 BSD License. Yes, that's right, completely free of cost or restrictions!
 
+%package lib
+Summary:    HyperSQL Database Engine library
+
+%description lib
+Library part of %{name}.
+
 %package manual
 Summary:    Manual for %{name}
-
 
 %description manual
 Documentation for %{name}.
@@ -103,14 +78,11 @@ Documentation for %{name}.
 %package javadoc
 Summary:    Javadoc for %{name}
 
-Requires:   jpackage-utils
-
 %description javadoc
 Javadoc for %{name}.
 
 %package demo
 Summary:    Demo for %{name}
-
 Requires:   %{name} = %{epoch}:%{version}-%{release}
 
 %description demo
@@ -118,30 +90,34 @@ Demonstrations and samples for %{name}.
 
 %prep
 %setup -q -n %{name}-%{version}/%{name}
+
 # set right permissions
 find . -name "*.sh" -exec chmod 755 \{\} \;
+
 # remove all _notes directories
 for dir in `find . -name _notes`; do rm -rf $dir; done
+
 # remove all binary libs
 find . -name "*.jar" -exec rm -f {} \;
 find . -name "*.class" -exec rm -f {} \;
 find . -name "*.war" -exec rm -f {} \;
+find . -name "*.zip" -exec rm -f {} \;
+
 # correct silly permissions
 chmod -R go=u-w *
 
 # Fix doc location
 sed -i -e 's/doc-src/doc/g' build/build.xml
+sed -i -e 's|doc/apidocs|%{_javadocdir}/%{name}|g' index.html
 
 %patch0 -p1
 %patch1 -p1
+%patch2 -p2 -b .orig
 
 %build
-export CLASSPATH=$(build-classpath \
-servlet \
-junit)
 pushd build
 export JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8
-ant hsqldb javadoc
+%ant hsqldb osgi javadoc -Dservletapi.lib=$(build-classpath glassfish-servlet-api) -Dbnd.jarpath=$(build-classpath aqute-bnd)
 popd
 
 %install
@@ -168,16 +144,14 @@ install -m 600 %{SOURCE4} %{buildroot}%{_localstatedir}/lib/%{name}/sqltool.rc
 # lib
 install -d -m 755 %{buildroot}%{_localstatedir}/lib/%{name}/lib
 # javadoc
-install -d -m 755 %{buildroot}%{_javadocdir}/%{name}
-cp -r doc/apidocs/* %{buildroot}%{_javadocdir}/%{name}
+install -d -m 755 %{buildroot}%{_javadocdir}
+mv doc/apidocs %{buildroot}%{_javadocdir}/%{name}
 # data
 install -d -m 755 %{buildroot}%{_localstatedir}/lib/%{name}/data
 # manual
-install -d -m 755 %{buildroot}%{_docdir}/%{name}-%{version}
-cp -r doc/* %{buildroot}%{_docdir}/%{name}-%{version}
-cp index.html %{buildroot}%{_docdir}/%{name}-%{version}
+install -d -m 755 %{buildroot}%{_pkgdocdir}
+cp -r doc index.html %{buildroot}%{_pkgdocdir}
 
-cd ..
 # Maven metadata
 install -pD -T -m 644 %{SOURCE5} %{buildroot}%{_mavenpomdir}/JPP-%{name}.pom
 %add_maven_depmap
@@ -186,7 +160,7 @@ pushd %{buildroot}%{_localstatedir}/lib/%{name}/lib
     # build-classpath can not be used as the jar is not
     # yet present during the build
     ln -s %{_javadir}/hsqldb.jar hsqldb.jar
-    ln -s $(build-classpath servlet) servlet.jar
+    ln -s $(build-classpath glassfish-servlet-api) servlet.jar
 popd
 
 %preun
@@ -219,8 +193,6 @@ popd
 /bin/systemctl try-restart hsqldb.service >/dev/null 2>&1 || :
 
 %files
-%defattr(-,root,root,-)
-%{_javadir}/*
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
 %{_unitdir}/%{name}.service
 %{_prefix}/lib/%{name}/%{name}-wrapper
@@ -232,11 +204,12 @@ popd
 %{_localstatedir}/lib/%{name}/webserver.properties
 %attr(0600,hsqldb,hsqldb) %{_localstatedir}/lib/%{name}/sqltool.rc
 %dir %{_localstatedir}/lib/%{name}
-%{_mavendepmapfragdir}/*
-%{_mavenpomdir}/*
+%dir %{_prefix}/lib/%{name}
+
+%files lib -f .mfiles
 
 %files manual
-%doc %{_docdir}/%{name}-%{version}
+%doc %{_pkgdocdir}
 
 %files javadoc
 %doc %{_javadocdir}/%{name}
@@ -244,6 +217,67 @@ popd
 %files demo
 
 %changelog
+* Fri Feb 10 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1:2.3.4-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
+
+* Wed Dec 07 2016 Michael Simacek <msimacek@redhat.com> - 1:2.3.4-2
+- Fix broken link to servlet.jar (Resolves rhbz#1400405)
+- Remove bundled servlet api
+
+* Wed Jun 01 2016 Michael Simacek <msimacek@redhat.com> - 1:2.3.4-1
+- Update to upstream version 2.3.4
+
+* Wed Feb 03 2016 Fedora Release Engineering <releng@fedoraproject.org> - 1:2.3.3-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
+
+* Fri Jan 29 2016 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.3-3
+- Fix ownership of %{_prefix}/lib/%{name}
+- Resolves: rhbz#1303104
+
+* Thu Oct  8 2015 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.3-2
+- Add After=network.target to systemd service
+- Resolves: rhbz#1269717
+
+* Thu Jul 23 2015 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.3-1
+- Add BR on javapackages-local
+
+* Tue Jun 30 2015 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.3-1
+- Update to upstream version 2.3.3
+
+* Wed Jun 17 2015 Mat Booth <mat.booth@redhat.com> - 1:2.3.2-3
+- Fix FTBFS by disabling java 8 doclint and building against glassfish-servlet-api
+
+* Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:2.3.2-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+
+* Thu Sep  4 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.2-1
+- Update to upstream version 2.3.2
+
+* Thu Sep  4 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.1-8
+- Split library into separate subpackage
+- Resolves: rhbz#1025821
+
+* Mon Jul 21 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.1-7
+- Fix javadoc generation
+
+* Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:2.3.1-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
+
+* Thu May 29 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.1-5
+- Use .mfiles generated during build
+
+* Mon Mar 10 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:2.3.1-4
+- Remove unneeded requires on systemd-sysv and initscripts
+
+* Tue Mar 04 2014 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1:2.3.1-3
+- Use Requires: java-headless rebuild (#1067528)
+
+* Fri Dec  6 2013 Ville Skyttä <ville.skytta@iki.fi> - 1:2.3.1-2
+- Doc path fixes (#993841).
+- Do not include API docs in -manual.
+- Fix bogus date in %%changelog.
+- Resolves: rhbz#1025821
+
 * Thu Oct 17 2013 Tomas Radej <tradej@redhat.com> - 1:2.3.1-1
 - Updated to latest upstream version
 
@@ -346,7 +380,7 @@ popd
 * Mon Jan 22 2007 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.7-2jpp
 - Update copyright date
 
-* Thu Jan 22 2007 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.7-1jpp.2
+* Mon Jan 22 2007 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.7-1jpp.2
 - Bump release to build in rawhide
 
 * Thu Jan 11 2007 Deepak Bhole <dbhole@redhat.com> 1:1.8.0.7-1jpp
@@ -453,3 +487,4 @@ popd
 * Fri Nov 09 2001 Christian Zoffoli <czoffoli@littlepenguin.org> 1.43-1jpp
 - first release
 - linuxization patch (doc + script)
+
